@@ -19,21 +19,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Train',
+          title: 'Si',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="tram" color={color} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Bus',
+          title: 'em',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="bus" color={color} />,
         }}
       />
       <Tabs.Screen
         name="streetcar"
         options={{
-          title: 'Streetcar',
+          title: 'Bra',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="logo.playstation" color={color} />,
         }}
       />
