@@ -66,22 +66,33 @@ export default function HomeScreen() {
   })();
 }, []);
 
+  console.log(location?.latitude, location?.longitude);
 
   return (
     <View style={styles.container}>
-      <Text style={{color: 'white'}}>{location?.latitude}</Text>
       <MapView 
         style={styles.map} 
-        //provider="google"
+        provider="google"
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
+        /*
         initialRegion={{
           latitude: 33.753962804699015,
           longitude: -84.391515148404,
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         }}
+        */
+
+        initialRegion={
+          {
+          latitude: location ? location.latitude : 33.753962804699015,
+          longitude: location ? location.longitude : -84.391515148404,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        }
+      }
       >
         {martaStations.map((station, index) => (
           <Marker
