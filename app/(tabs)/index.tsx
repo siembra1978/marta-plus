@@ -64,15 +64,14 @@ export default function HomeScreen() {
       (loc) => setLocation(loc.coords)
     );
   })();
-}, []);
-
+  }, []);
 
   return (
     <View style={styles.container}>
       <Text style={{color: 'white'}}>{location?.latitude}</Text>
       <MapView 
         style={styles.map} 
-        //provider="google"
+        provider="google"
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
@@ -92,12 +91,14 @@ export default function HomeScreen() {
             }}
             title={station.name}
           >
-            <Image 
-              source={require('../../assets/images/trainicon.png')}
-              style={{ width: 25, height: 25 }}
-              resizeMode="contain"
-            />
-            <Text style={styles.markerText}>{station.name}</Text>
+            <View style={styles.markerContainer}>
+              <Image 
+                source={require('../../assets/images/trainicon.png')}
+                style={{ width: 25, height: 25 }}
+                resizeMode="contain"
+              />
+              {/*<Text style={styles.markerText}>{station.name + ''}</Text>*/}
+            </View>
           </Marker>
         ))}
       </MapView>
@@ -115,12 +116,18 @@ const styles = StyleSheet.create({
   },
   markerText: {
     color: 'black',
-    fontSize: 12,
+    fontFamily: 'Arial',
+    fontSize: 10,
     fontWeight: '600',
     backgroundColor: 'white',
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
-    overflow: 'hidden',
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 2,
+    borderRadius: 4,
   }
 });
