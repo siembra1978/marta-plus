@@ -1,7 +1,7 @@
 import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const martaStations = [
@@ -64,23 +64,34 @@ export default function HomeScreen() {
       (loc) => setLocation(loc.coords)
     );
   })();
-  }, []);
+}, []);
+
 
   return (
     <View style={styles.container}>
-      <Text style={{color: 'white'}}>{location?.latitude}</Text>
       <MapView 
         style={styles.map} 
         provider="google"
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
+        /*
         initialRegion={{
           latitude: 33.753962804699015,
           longitude: -84.391515148404,
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         }}
+        */
+
+        initialRegion={
+          {
+          latitude: location ? location.latitude : 33.753962804699015,
+          longitude: location ? location.longitude : -84.391515148404,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        }
+      }
       >
         {martaStations.map((station, index) => (
           <Marker
