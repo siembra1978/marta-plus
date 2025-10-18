@@ -1,42 +1,37 @@
-import { Tabs } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <Tabs
+    <Drawer
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
+        headerShown: true
       }}>
-      <Tabs.Screen
+      <Drawer.Screen
         name="index"
         options={{
-          title: 'Si',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="tram" color={color} />,
+          title: 'MARTA+',
+          drawerLabel: 'System Map'
         }}
       />
-      <Tabs.Screen
+      <Drawer.Screen
         name="explore"
         options={{
-          title: 'em',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bus" color={color} />,
+          title: 'MARTA+',
+          drawerLabel: 'Test1'
         }}
       />
-      <Tabs.Screen
+      <Drawer.Screen
         name="streetcar"
         options={{
-          title: 'Bra',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="logo.playstation" color={color} />,
+          title: 'MARTA+',
+          drawerLabel: 'Test2'
         }}
       />
-    </Tabs>
+    </Drawer>
   );
 }
