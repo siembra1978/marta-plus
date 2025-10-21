@@ -51,39 +51,93 @@ const martaStations = [
   { name: 'Indian Creek', latitude: 33.76986471874239, longitude: -84.22966006928485 }
 ];
 
+type Train = {
+  DESTINATION: string;
+  DIRECTION: string;
+  EVENT_TIME: string;
+  IS_REALTIME: string;
+  LINE: string;
+  NEXT_ARR: string;
+  STATION: string;
+  TRAIN_ID: string;
+  WAITING_SECONDS: string;
+  WAITING_TIME: string;
+  DELAY: string;
+  LATITUDE: string;
+  LONGITUDE: string;
+}
+
+const martaUrl = process.env.EXPO_PUBLIC_MARTA_API_URL!;
+
+if (!martaUrl) {
+  throw new Error("Missing EXPO_PUBLIC_MARTA_API_URL environment variable");
+}
+
 export default function HomeScreen() {
   const [location, setLocation] = useState<LocationObjectCoords | null>(null);
+  const [isLoading, setLoading] = useState(true);
+  const [data, setData] = useState<Train[]>([]);
+
+  const getTrains = async () => {
+    if (!martaUrl) {
+      console.error("No MARTA API Key Set!");
+      return;
+    }
+
+    try {
+      const response = await fetch(martaUrl);
+      const json = await response.json()
+      setData(json)
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-  (async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return;
+    const interval = setInterval(getTrains, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 5 },
-      (loc) => setLocation(loc.coords)
-    );
-  })();
-}, []);
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
 
+      await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 5 },
+        (loc) => setLocation(loc.coords)
+      );
+    })();
+  }, []);
 
   return (
     <View style={styles.container}>
+      {/*
+      <Text style={styles.markerText}>DEBUG</Text>
+      
+      {isLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <FlatList
+          data={data}
+          //keyExtractor={({TRAIN_ID}) => TRAIN_ID}
+          renderItem={({item}) => (
+            <Text style={styles.markerText}>
+              {item.LINE}, {item.DESTINATION}, {item.DIRECTION}, {item.NEXT_ARR}, {item.WAITING_SECONDS}
+            </Text>
+          )}
+        />
+      )}
+        */}
+
       <MapView 
         style={styles.map} 
-        provider="google"
+        //provider="google"
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
-        /*
-        initialRegion={{
-          latitude: 33.753962804699015,
-          longitude: -84.391515148404,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        }}
-        */
-
         initialRegion={
           {
           latitude: location ? location.latitude : 33.753962804699015,
@@ -108,11 +162,30 @@ export default function HomeScreen() {
                 style={{ width: 25, height: 25 }}
                 resizeMode="contain"
               />
-              {/*<Text style={styles.markerText}>{station.name + ''}</Text>*/}
+            </View>
+          </Marker>
+        ))}
+        {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => (
+          <Marker
+            key={index}
+            coordinate={{
+              latitude: +train.LATITUDE,
+              longitude: +train.LONGITUDE,
+            }}
+            title={`${train.LINE} - ${train.DESTINATION}`}
+            description={`Next arrival: ${train.STATION} at ${train.NEXT_ARR}`}
+          >
+            <View style={styles.markerContainer}>
+              <Image 
+                source={require('../../assets/images/react-logo.png')}
+                style={{ width: 25, height: 25 }}
+                resizeMode="contain"
+              />
             </View>
           </Marker>
         ))}
       </MapView>
+
     </View>
   );
 }
@@ -126,11 +199,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   markerText: {
-    color: 'black',
+    color: 'white',
     fontFamily: 'Arial',
     fontSize: 10,
     fontWeight: '600',
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,

@@ -14,21 +14,21 @@ export default function TabLayout() {
       <Drawer.Screen
         name="index"
         options={{
-          title: 'MARTA+',
+          title: 'System Map',
           drawerLabel: 'System Map'
         }}
       />
       <Drawer.Screen
         name="explore"
         options={{
-          title: 'MARTA+',
-          drawerLabel: 'Test1'
+          title: 'Train Arrivals',
+          drawerLabel: 'Train Arrivals'
         }}
       />
       <Drawer.Screen
         name="streetcar"
         options={{
-          title: 'MARTA+',
+          title: 'Test',
           drawerLabel: 'Test2'
         }}
       />
