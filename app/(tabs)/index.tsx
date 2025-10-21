@@ -4,6 +4,193 @@ import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
+const mapStyle = [
+  {
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#212121"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#212121"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.country",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9e9e9e"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.land_parcel",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.locality",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#bdbdbd"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#181818"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#616161"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#1b1b1b"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#2c2c2c"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#8a8a8a"
+      }
+    ]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#373737"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#3c3c3c"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway.controlled_access",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#4e4e4e"
+      }
+    ]
+  },
+  {
+    "featureType": "road.local",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#616161"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#757575"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#000000"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#3d3d3d"
+      }
+    ]
+  }
+]
+
 const martaStations = [
   // Red Line Down To Lindbergh
   { name: 'North Springs', latitude: 33.94500907369242, longitude: -84.35719394287439},
@@ -108,8 +295,21 @@ export default function HomeScreen() {
 
     try {
       const response = await fetch(martaUrl);
-      const json = await response.json()
-      setData(json)
+      const json: Train[] = await response.json();
+
+      const latestTrains = Object.values(
+        json.reduce((acc: Record<string, Train>, curr: Train) => {
+          if (!curr.TRAIN_ID || curr.IS_REALTIME !== 'true') return acc;
+          const prev = acc[curr.TRAIN_ID];
+          const currWait = parseInt(curr.WAITING_SECONDS, 10);
+          if (!prev || currWait < parseInt(prev.WAITING_SECONDS, 10)) {
+            acc[curr.TRAIN_ID] = curr;
+          }
+          return acc;
+      }, {})
+      );
+
+      setData(latestTrains)
     } catch (error) {
       console.error(error);
     } finally {
@@ -160,6 +360,8 @@ export default function HomeScreen() {
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
+        onPanDrag={() => {}}
+        customMapStyle={mapStyle}
         initialRegion={
           {
           latitude: location ? location.latitude : 33.753962804699015,
@@ -181,7 +383,7 @@ export default function HomeScreen() {
             <View style={styles.markerContainer}>
               <Image 
                 source={require('../../assets/images/trainicon.png')}
-                style={{ width: 25, height: 25 }}
+                style={{ width: 15, height: 15 }}
                 resizeMode="contain"
               />
             </View>

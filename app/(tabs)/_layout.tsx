@@ -19,17 +19,17 @@ export default function TabLayout() {
         }}
       />
       <Drawer.Screen
-        name="explore"
+        name="trainarrivals"
         options={{
           title: 'Train Arrivals',
           drawerLabel: 'Train Arrivals'
         }}
       />
       <Drawer.Screen
-        name="streetcar"
+        name="alerts"
         options={{
-          title: 'Test',
-          drawerLabel: 'Test2'
+          title: 'Alerts/Delays',
+          drawerLabel: 'Alerts'
         }}
       />
     </Drawer>
