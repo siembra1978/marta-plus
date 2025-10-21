@@ -51,6 +51,28 @@ const martaStations = [
   { name: 'Indian Creek', latitude: 33.76986471874239, longitude: -84.22966006928485 }
 ];
 
+const trainIcons: Record<string, any> = {
+  NRed: require('../../assets/trainicons/NRed.png'),
+  SRed: require('../../assets/trainicons/SRed.png'),
+  ERed: require('../../assets/trainicons/ERed.png'),
+  WRed: require('../../assets/trainicons/WRed.png'),
+
+  NBlue: require('../../assets/trainicons/NBlue.png'),
+  SBlue: require('../../assets/trainicons/SBlue.png'),
+  EBlue: require('../../assets/trainicons/EBlue.png'),
+  WBlue: require('../../assets/trainicons/WBlue.png'),
+
+  NGold: require('../../assets/trainicons/NGold.png'),
+  SGold: require('../../assets/trainicons/SGold.png'),
+  EGold: require('../../assets/trainicons/EGold.png'),
+  WGold: require('../../assets/trainicons/WGold.png'),
+
+  NGreen: require('../../assets/trainicons/NGreen.png'),
+  SGreen: require('../../assets/trainicons/SGreen.png'),
+  EGreen: require('../../assets/trainicons/EGreen.png'),
+  WGreen: require('../../assets/trainicons/WGreen.png'),
+};
+
 type Train = {
   DESTINATION: string;
   DIRECTION: string;
@@ -134,7 +156,7 @@ export default function HomeScreen() {
 
       <MapView 
         style={styles.map} 
-        //provider="google"
+        provider="google"
         pitchEnabled={false}
         rotateEnabled={false}
         showsUserLocation={true}
@@ -165,7 +187,14 @@ export default function HomeScreen() {
             </View>
           </Marker>
         ))}
-        {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => (
+
+        {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => {
+          const direction = train.DIRECTION?.toUpperCase();
+          const line = train.LINE?.charAt(0).toUpperCase() + train.LINE?.slice(1).toLowerCase();
+          const iconText = `${direction}${line}`
+          const icon = trainIcons[iconText] || require('../../assets/images/react-logo.png');
+          
+          return (
           <Marker
             key={index}
             coordinate={{
@@ -177,13 +206,15 @@ export default function HomeScreen() {
           >
             <View style={styles.markerContainer}>
               <Image 
-                source={require('../../assets/images/react-logo.png')}
+                source={icon}
                 style={{ width: 25, height: 25 }}
                 resizeMode="contain"
               />
             </View>
           </Marker>
-        ))}
+          )
+          }
+        )}
       </MapView>
 
     </View>
