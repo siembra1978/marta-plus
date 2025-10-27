@@ -1,6 +1,6 @@
-# 🚂 Marta+ (WIP) 🚂
+# 🚂 MARTA+ (WIP) 🚂
 
-Marta+ is an alternative to the *MARTA On the Go* app, featuring real-time tracking, a more modernized GUI, and native support for both iOS and Android devices. This project was created with [Expo](https://expo.dev) and [React Native](https://reactnative.dev/).
+MARTA+ is an alternative to the *MARTA On the Go* app, featuring real-time tracking, a more modernized GUI, and native support for both iOS and Android devices. This project was created with [Expo](https://expo.dev) and [React Native](https://reactnative.dev/).
 
 <img src="assets/readme/map.png" width="20%"></img> <img src="assets/readme/alerts.png" width="20%"></img>
 
