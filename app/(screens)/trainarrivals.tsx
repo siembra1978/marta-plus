@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Button, Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 //import { Button } from '@react-navigation/elements';
 
 const martaStations = [
@@ -52,25 +54,62 @@ const martaStations = [
   { name: 'Indian Creek', latitude: 33.76986471874239, longitude: -84.22966006928485, apiName: 'INDIAN CREEK STATION'}
 ];
 
-export default function TabTwoScreen() {
-    const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState("");
-  
-    const filteredStations = martaStations.filter((station) =>
-      station.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+export default function ArrivalsScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const backgroundColor = isDark ? '#1C1C1E' : '#fff';
+  const textColor = isDark ? '#fff' : '#000';
 
-    const normalizeStationName = (name: string) => {
-      return name
-        .replace(/\//g, "/") // keep slashes for MARTA naming
-        .replace(/\s+/g, " ") // remove extra spaces
-        .trim()
-        .toUpperCase() + " STATION";
-      };
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredStations = martaStations.filter((station) =>
+    station.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getNearestStation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      let nearest = null;
+      let minDistance = Infinity;
+
+      for (let station of martaStations) {
+        const distance = Math.sqrt(
+          Math.pow(latitude - station.latitude, 2) +
+          Math.pow(longitude - station.longitude, 2)
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = station;
+        }
+      }
+
+      if (nearest) {
+        router.push({
+          pathname: '/modal',
+          params: { stationName: nearest.apiName },
+        });
+      } else {
+        alert('No nearby station found.');
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert('Error finding nearest station.');
+    }
+  };
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#D0D0D0' }}
       headerImage={
         <Image
         source={require('../../assets/images/maxresdefault.jpg')}
@@ -81,31 +120,114 @@ export default function TabTwoScreen() {
 
         </Image>
       }>
+
       <View style={styles.viewThing}>
+      
+      {/*
       <Text style={styles.textFont}>
         Train Arrivals (WIP)
       </Text>
+      */}
 
-      <Button 
-            title="Nearest Station"
-            onPress={() => router.push({pathname: "/modal", 
-            params: { stationName: "AVONDALE STATION" }})}/>
+      <Pressable 
+        onPress={getNearestStation}
+        style={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          marginVertical: 6,
+          marginHorizontal: 1,
+          borderRadius: 16,
+          borderColor: '#1976D2',
+          borderWidth: 2,
+          backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
+          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+        }}
+        >
+          <Text style={{
+            color: textColor,
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontWeight: 'bold',
+            backgroundColor: 'transparent',
+            paddingHorizontal: 4,
+            paddingVertical: 2,
+            borderRadius: 4
+          }}>
+            Nearest Station
+          </Text>
+      </Pressable>
 
-      <TextInput
-          style={styles.input}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          marginVertical: 6,
+          marginHorizontal: 1,
+          borderRadius: 16,
+          backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
+          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+        }}
+      >
+        <Ionicons
+          name="search"
+          size={20}
+          color={isDark ? '#aaa' : '#666'}
+          style={{ marginRight: 8 }}
+        />
+        <TextInput
+          style={{ flex: 1, color: isDark ? '#fff' : '#000' }}
           placeholder="Search stations..."
           placeholderTextColor="#aaa"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-
+      </View>
+      {filteredStations.length === 0 && (
+        <Text style={{ 
+          textAlign: 'center',
+          color: textColor,
+          fontFamily: 'Arial',
+          fontSize: 20,
+          fontWeight: 'bold',
+          backgroundColor: 'transparent',
+          paddingHorizontal: 4,
+          paddingVertical: 16,
+          borderRadius: 4
+        }}>
+          No stations found.
+        </Text>
+      )}
       {filteredStations.map((station, index) => (
-          <Button 
-            title={station.name} 
-            key={index} 
-            onPress={() => router.push({
-              pathname: "/modal", 
-              params: { stationName: station.apiName}})}/>
+          <Pressable key={index} onPress={() => router.push({pathname: "/modal", params: { stationName: station.apiName}})}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            marginVertical: 6,
+            marginHorizontal: 1,
+            borderRadius: 16,
+            backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
+            overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+          }}
+          >
+            <Text style={{
+              color: textColor,
+              fontFamily: 'Arial',
+              fontSize: 20,
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4
+            }}>
+              {station.name}
+            </Text>
+          </Pressable>
         ))}
       </View>
     </ParallaxScrollView>

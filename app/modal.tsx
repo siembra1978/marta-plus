@@ -2,7 +2,8 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, Text, useColorScheme, View } from 'react-native';
+//import { FlatList } from 'react-native-gesture-handler';
 
 const martaStations = [
   // Red Line Down To Lindbergh
@@ -78,6 +79,11 @@ export default function ModalScreen() {
       const { stationName } = useLocalSearchParams<{ stationName?: string }>();
       const [isLoading, setLoading] = useState(true);
       const [data, setData] = useState<Train[]>([]);
+
+      const colorScheme = useColorScheme();
+      const isDark = colorScheme === 'dark';
+      const backgroundColor = isDark ? '#1C1C1E' : '#fff';
+      const textColor = isDark ? '#fff' : '#000';
     
       const getTrains = async () => {
         if (!martaUrl) {
@@ -103,65 +109,111 @@ export default function ModalScreen() {
       }, []);
 
     if (isLoading) {
-      return <Text style={styles.entryFont}>Loading train data...</Text>;
+      return (
+      <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1, alignItems:'center', justifyContent: 'center'}}>
+        <Text style={{    
+              color: 'white',
+              fontFamily: 'Arial',
+              fontSize: 20,
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4
+        }}>Loading train data...</Text>
+      </View>
+      );
     }
+
+    const stationTrains = data
+      .filter((train) => train.STATION === stationName)
+      .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
   
     return (
-      <View>
-        <Text style={styles.textFont}>
+      <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1}}>
+        <Text style={{
+          color: textColor,
+          fontFamily: 'Arial',
+          fontSize: 30,
+          fontWeight: 'bold',
+          backgroundColor: 'transparent',
+          paddingHorizontal: 4,
+          paddingVertical: 2,
+          borderRadius: 4
+        }}>
           {stationName}
         </Text>
-  
-        {data.filter((train) => train.STATION == stationName).sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10)).map((train, index) => {
-            const direction = train.DIRECTION?.toUpperCase();
-            const line = train.LINE?.charAt(0).toUpperCase() + train.LINE?.slice(1).toLowerCase();
-            
-            return (
-              <View style={{backgroundColor: train.LINE.toLowerCase(), padding: 10, marginBottom: 20}} key={index}>
-                <Text style={styles.textFont}>
-                  {train.LINE} | {train.DESTINATION}
-                </Text>
-                <Text style={styles.entryFont}>
-                {train.NEXT_ARR} | {train.WAITING_TIME} | {train.WAITING_SECONDS}s
-                </Text>
-              </View>
-            )
-            }
-          )}
+
+        <FlatList
+        data={stationTrains}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              marginVertical: 6,
+              marginHorizontal: 12,
+              borderRadius: 16,
+              backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
+              borderLeftWidth: 6,
+              borderLeftColor:
+                item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                '#808080',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.15,
+              shadowRadius: 3,
+              elevation: 2,
+              overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+            }}
+          >
+            <Text style={{
+              color: isDark ? '#FFF' : '#000',
+              fontFamily: 'Arial',
+              fontSize: 30,
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4
+            }}>
+              {item.LINE} | {item.DESTINATION}
+            </Text>
+            <Text style={{    
+              color: isDark ? '#FFF' : '#000',
+              fontFamily: 'Arial',
+              fontSize: 20,
+              fontWeight: '600',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4
+            }}>
+              {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
+            </Text>
+          </View>
+        )}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        ListEmptyComponent={
+          <Text style={{    
+              color: 'white',
+              fontFamily: 'Arial',
+              fontSize: 20,
+              fontWeight: '600',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4
+          }}>No trains found for this station.</Text>
+        }
+      />
       </View>
         
     );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  textFont: {
-    color: 'white',
-    fontFamily: 'Arial',
-    fontSize: 30,
-    fontWeight: '600',
-    backgroundColor: 'transparent',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4
-  },
-  entryFont: {
-    color: 'white',
-    fontFamily: 'Arial',
-    fontSize: 20,
-    fontWeight: '600',
-    backgroundColor: 'transparent',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4
-  }
-});

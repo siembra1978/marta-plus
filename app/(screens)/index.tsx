@@ -2,7 +2,7 @@ import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, useColorScheme } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const mapStyle = [
@@ -284,6 +284,9 @@ if (!martaUrl) {
 }
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme == 'dark';
+  
   const router = useRouter();
   const [location, setLocation] = useState<LocationObjectCoords | null>(null);
   const [isLoading, setLoading] = useState(true);
@@ -299,21 +302,27 @@ export default function HomeScreen() {
       const response = await fetch(martaUrl);
       const json: Train[] = await response.json();
 
-      const latestTrains = Object.values(
-        json.reduce((acc: Record<string, Train>, curr: Train) => {
-          if (!curr.TRAIN_ID || curr.IS_REALTIME !== 'true') return acc;
-          const prev = acc[curr.TRAIN_ID];
-          const currWait = parseInt(curr.WAITING_SECONDS, 10);
-          if (!prev || currWait < parseInt(prev.WAITING_SECONDS, 10)) {
-            acc[curr.TRAIN_ID] = curr;
-          }
-          return acc;
-      }, {})
-      );
-
-      setData(latestTrains)
+      
+      try {
+        const latestTrains = Object.values(
+          json.reduce((acc: Record<string, Train>, curr: Train) => {
+            if (!curr.TRAIN_ID || curr.IS_REALTIME !== 'true') return acc;
+            const prev = acc[curr.TRAIN_ID];
+            const currWait = parseInt(curr.WAITING_SECONDS, 10);
+            if (!prev || currWait < parseInt(prev.WAITING_SECONDS, 10)) {
+              acc[curr.TRAIN_ID] = curr;
+            }
+            return acc;
+        }, {})
+        );
+        
+        setData(latestTrains)
+      } catch (error) {
+        console.log('MARTA API Response:', json);
+      }
     } catch (error) {
-      console.error(error);
+      console.log(error)
+      //console.log("ERROR: " + error +" | Usually caused by MARTA API problems");
     } finally {
       setLoading(false);
     }
@@ -364,7 +373,7 @@ export default function HomeScreen() {
         rotateEnabled={false}
         showsUserLocation={true}
         onPanDrag={() => {}}
-        customMapStyle={mapStyle}
+        customMapStyle={isDarkMode ? mapStyle : []}
         initialRegion={
           {
           latitude: location ? location.latitude : 33.753962804699015,
@@ -384,7 +393,7 @@ export default function HomeScreen() {
             title={station.name}
             onPress={() => router.push({
               pathname: "/modal", 
-              params: { stationName: station.name.toUpperCase().replace(/[^a-zA-Z\s]/g, "") + " STATION" }})}
+              params: { stationName: station.apiName }})}
           >
             <View style={styles.markerContainer}>
               <Image 
