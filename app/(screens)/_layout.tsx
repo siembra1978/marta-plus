@@ -21,7 +21,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps){
 
       <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={{ padding: 15, paddingTop: 0}}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: textColor}}>Live Information</Text>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: textColor}}>Live Information & Help</Text>
         </View>
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
@@ -68,7 +68,7 @@ export default function DrawerLayout() {
         options={{
           title: 'System Map',
           drawerLabel: 'System Map',
-          drawerIcon: ({color, size}) => <Ionicons name = "map-outline" size = {size} color = {color}></Ionicons>
+          drawerIcon: ({color, size}) => <Ionicons name = "map" size = {size} color = {color}></Ionicons>
         }}
       />
       <Drawer.Screen
@@ -76,15 +76,31 @@ export default function DrawerLayout() {
         options={{
           title: 'Train Arrivals',
           drawerLabel: 'Train Arrivals',
-          drawerIcon: ({color, size}) => <Ionicons name = "train" size = {size} color = {color}></Ionicons>
+          drawerIcon: ({color, size}) => <Ionicons name = "subway" size = {size} color = {color}></Ionicons>
+        }}
+      />
+      <Drawer.Screen
+        name="bus"
+        options={{
+          title: 'Bus Tracking',
+          drawerLabel: 'Bus Tracking',
+          drawerIcon: ({color, size}) => <Ionicons name = "bus" size = {size} color = {color}></Ionicons>
         }}
       />
       <Drawer.Screen
         name="alerts"
         options={{
           title: 'Alerts & Delays',
-          drawerLabel: 'Alerts',
-          drawerIcon: ({color, size}) => <Ionicons name = "alert-circle-outline" size = {size} color = {color}></Ionicons>
+          drawerLabel: 'Service Alerts',
+          drawerIcon: ({color, size}) => <Ionicons name = "alert-circle" size = {size} color = {color}></Ionicons>
+        }}
+      />
+      <Drawer.Screen
+        name="marty"
+        options={{
+          title: 'Marty.ai',
+          drawerLabel: 'Marty.ai',
+          drawerIcon: ({color, size}) => <Ionicons name = "chatbox" size = {size} color = {color}></Ionicons>
         }}
       />
     </Drawer>

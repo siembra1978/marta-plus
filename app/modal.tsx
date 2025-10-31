@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Platform, Text, useColorScheme, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 //import { FlatList } from 'react-native-gesture-handler';
 
 const martaStations = [
@@ -108,18 +109,20 @@ export default function ModalScreen() {
 
     if (isLoading) {
       return (
-      <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1, alignItems:'center', justifyContent: 'center'}}>
-        <Text style={{    
-              color: 'white',
-              fontFamily: 'Arial',
-              fontSize: 20,
-              fontWeight: 'bold',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4
-        }}>Loading train data...</Text>
-      </View>
+      <SafeAreaProvider>
+        <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1, alignItems:'center', justifyContent: 'center'}}>
+          <Text style={{    
+                color: 'white',
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+          }}>Loading train data...</Text>
+        </View>
+      </SafeAreaProvider>
       );
     }
 
@@ -128,90 +131,91 @@ export default function ModalScreen() {
       .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
   
     return (
-      <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1}}>
-        <Text style={{
-          color: textColor,
-          fontFamily: 'Arial',
-          fontSize: 30,
-          fontWeight: 'bold',
-          backgroundColor: 'transparent',
-          paddingHorizontal: 4,
-          paddingVertical: 2,
-          borderRadius: 4
-        }}>
-          {stationName}
-        </Text>
+      <SafeAreaProvider>
+        <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1}}>
+          <Text style={{
+            color: textColor,
+            fontFamily: 'Arial',
+            fontSize: 30,
+            fontWeight: 'bold',
+            backgroundColor: 'transparent',
+            paddingHorizontal: 4,
+            paddingVertical: 2,
+            borderRadius: 4
+          }}>
+            {stationName}
+          </Text>
 
-        <FlatList
-        data={stationTrains}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              marginVertical: 6,
-              marginHorizontal: 12,
-              borderRadius: 16,
-              backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
-              borderLeftWidth: 6,
-              borderLeftColor:
-                item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
-                item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
-                item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
-                item.LINE.toLowerCase() === 'green' ? '#388E3C' :
-                '#808080',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3,
-              elevation: 2,
-              overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-            }}
-          >
-            <Text style={{
-              color: isDark ? '#FFF' : '#000',
-              fontFamily: 'Arial',
-              fontSize: 30,
-              fontWeight: 'bold',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4
-            }}>
-              {item.LINE} | {item.DESTINATION}
-            </Text>
+          <FlatList
+          data={stationTrains}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                marginVertical: 6,
+                marginHorizontal: 12,
+                borderRadius: 16,
+                backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
+                borderLeftWidth: 6,
+                borderLeftColor:
+                  item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                  item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                  item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                  item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                  '#808080',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+                elevation: 2,
+                overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+              }}
+            >
+              <Text style={{
+                color: isDark ? '#FFF' : '#000',
+                fontFamily: 'Arial',
+                fontSize: 30,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+              }}>
+                {item.LINE} | {item.DESTINATION}
+              </Text>
+              <Text style={{    
+                color: isDark ? '#FFF' : '#000',
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fontWeight: '600',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+              }}>
+                {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
+              </Text>
+            </View>
+          )}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={
             <Text style={{    
-              color: isDark ? '#FFF' : '#000',
-              fontFamily: 'Arial',
-              fontSize: 20,
-              fontWeight: '600',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4
-            }}>
-              {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
-            </Text>
-          </View>
-        )}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListEmptyComponent={
-          <Text style={{    
-              color: 'white',
-              fontFamily: 'Arial',
-              fontSize: 20,
-              fontWeight: '600',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4
-          }}>No trains found for this station.</Text>
-        }
-      />
-      </View>
-        
+                color: 'white',
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fontWeight: '600',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+            }}>No trains found for this station.</Text>
+          }
+        />
+        </View>
+      </SafeAreaProvider>
     );
 }

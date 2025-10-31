@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
@@ -108,101 +109,30 @@ export default function ArrivalsScreen() {
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#D0D0D0' }}
-      headerImage={
-        <Image
-        source={require('../../assets/images/maxresdefault.jpg')}
-        style={{ width: '100%',
-        height: undefined,
-        aspectRatio: 1,}}
-        >
+    <SafeAreaProvider>
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#D0D0D0', dark: '#D0D0D0' }}
+        headerImage={
+          <Image
+          source={require('../../assets/images/maxresdefault.jpg')}
+          style={{ width: '100%',
+          height: undefined,
+          aspectRatio: 1,}}
+          >
 
-        </Image>
-      }>
+          </Image>
+        }>
 
-      <View style={styles.viewThing}>
-      
-      {/*
-      <Text style={styles.textFont}>
-        Train Arrivals (WIP)
-      </Text>
-      */}
-
-      <Pressable 
-        onPress={getNearestStation}
-        style={{
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          marginVertical: 6,
-          marginHorizontal: 1,
-          borderRadius: 16,
-          borderColor: '#1976D2',
-          borderWidth: 2,
-          backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
-          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-        }}
-        >
-          <Text style={{
-            color: textColor,
-            fontFamily: 'Arial',
-            fontSize: 20,
-            fontWeight: 'bold',
-            backgroundColor: 'transparent',
-            paddingHorizontal: 4,
-            paddingVertical: 2,
-            borderRadius: 4
-          }}>
-            Nearest Station
-          </Text>
-      </Pressable>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          marginVertical: 6,
-          marginHorizontal: 1,
-          borderRadius: 16,
-          backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
-          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-        }}
-      >
-        <Ionicons
-          name="search"
-          size={20}
-          color={isDark ? '#aaa' : '#666'}
-          style={{ marginRight: 8 }}
-        />
-        <TextInput
-          style={{ flex: 1, color: isDark ? '#fff' : '#000' }}
-          placeholder="Search stations..."
-          placeholderTextColor="#aaa"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-      {filteredStations.length === 0 && (
-        <Text style={{ 
-          textAlign: 'center',
-          color: textColor,
-          fontFamily: 'Arial',
-          fontSize: 20,
-          fontWeight: 'bold',
-          backgroundColor: 'transparent',
-          paddingHorizontal: 4,
-          paddingVertical: 16,
-          borderRadius: 4
-        }}>
-          No stations found.
+        <View style={styles.viewThing}>
+        
+        {/*
+        <Text style={styles.textFont}>
+          Train Arrivals (WIP)
         </Text>
-      )}
-      {filteredStations.map((station, index) => (
-          <Pressable key={index} onPress={() => router.push({pathname: "/modal", params: { stationName: station.apiName}})}
+        */}
+
+        <Pressable 
+          onPress={getNearestStation}
           style={{
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -211,6 +141,8 @@ export default function ArrivalsScreen() {
             marginVertical: 6,
             marginHorizontal: 1,
             borderRadius: 16,
+            borderColor: '#1976D2',
+            borderWidth: 2,
             backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
             overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
           }}
@@ -225,12 +157,83 @@ export default function ArrivalsScreen() {
               paddingVertical: 2,
               borderRadius: 4
             }}>
-              {station.name}
+              Nearest Station
             </Text>
-          </Pressable>
-        ))}
-      </View>
-    </ParallaxScrollView>
+        </Pressable>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            marginVertical: 6,
+            marginHorizontal: 1,
+            borderRadius: 16,
+            backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
+            overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+          }}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color={isDark ? '#aaa' : '#666'}
+            style={{ marginRight: 8 }}
+          />
+          <TextInput
+            style={{ flex: 1, color: isDark ? '#fff' : '#000' }}
+            placeholder="Search stations..."
+            placeholderTextColor="#aaa"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        {filteredStations.length === 0 && (
+          <Text style={{ 
+            textAlign: 'center',
+            color: textColor,
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontWeight: 'bold',
+            backgroundColor: 'transparent',
+            paddingHorizontal: 4,
+            paddingVertical: 16,
+            borderRadius: 4
+          }}>
+            No stations found.
+          </Text>
+        )}
+        {filteredStations.map((station, index) => (
+            <Pressable key={index} onPress={() => router.push({pathname: "/modal", params: { stationName: station.apiName}})}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              marginVertical: 6,
+              marginHorizontal: 1,
+              borderRadius: 16,
+              backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
+              overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+            }}
+            >
+              <Text style={{
+                color: textColor,
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+              }}>
+                {station.name}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </ParallaxScrollView>
+    </SafeAreaProvider>
   );
 }
 

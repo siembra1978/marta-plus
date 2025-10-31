@@ -1,9 +1,12 @@
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, View, useColorScheme } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Image, Platform, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker } from 'react-native-maps';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const mapStyle = [
   {
@@ -285,12 +288,21 @@ if (!martaUrl) {
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme == 'dark';
+  const isDark = colorScheme == 'dark';
+  const textColor = isDark ? '#fff' : '#000';
+
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log('handleSheetChanges', index);
+  }, []);
   
   const router = useRouter();
   const [location, setLocation] = useState<LocationObjectCoords | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [data, setData] = useState<Train[]>([]);
+  const [allData, setAllData] = useState<Train[]>([]);
+  const [nearestStation, setNearestStation] = useState<{ name: string; apiName: string } | null>(null);
 
   const getTrains = async () => {
     if (!martaUrl) {
@@ -302,6 +314,7 @@ export default function HomeScreen() {
       const response = await fetch(martaUrl);
       const json: Train[] = await response.json();
 
+      setAllData(json)
       
       try {
         const latestTrains = Object.values(
@@ -328,8 +341,50 @@ export default function HomeScreen() {
     }
   }
 
+  const getNearestStation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      let nearest = null;
+      let minDistance = Infinity;
+
+      for (let station of martaStations) {
+        const distance = Math.sqrt(
+          Math.pow(latitude - station.latitude, 2) +
+          Math.pow(longitude - station.longitude, 2)
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = station;
+        }
+      }
+
+      if (nearest) {
+        setNearestStation(nearest);
+      } else {
+        alert('No nearby station found.');
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert('Error finding nearest station.');
+    }
+  };
+
+  const nearestStationArrivals = allData
+      .filter((train) => train.STATION === nearestStation?.apiName)
+      .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
+
   useEffect(() => {
-    getTrains()
+    getTrains();
+    getNearestStation();
     const interval = setInterval(getTrains, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -346,96 +401,235 @@ export default function HomeScreen() {
     })();
   }, []);
 
+    if (isLoading) {
+    return (
+      <SafeAreaProvider>
+        <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1, alignItems:'center', justifyContent: 'center'}}>
+          <Text style={{    
+                color: 'white',
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4
+          }}>Loading train data...</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      {/*
-      <Text style={styles.markerText}>DEBUG</Text>
-      
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <FlatList
-          data={data}
-          //keyExtractor={({TRAIN_ID}) => TRAIN_ID}
-          renderItem={({item}) => (
-            <Text style={styles.markerText}>
-              {item.LINE}, {item.DESTINATION}, {item.DIRECTION}, {item.NEXT_ARR}, {item.WAITING_SECONDS}
-            </Text>
-          )}
-        />
-      )}
-        */}
-
-      <MapView 
-        style={styles.map} 
-        provider="google"
-        pitchEnabled={false}
-        rotateEnabled={false}
-        showsUserLocation={true}
-        onPanDrag={() => {}}
-        customMapStyle={isDarkMode ? mapStyle : []}
-        initialRegion={
-          {
-          latitude: location ? location.latitude : 33.753962804699015,
-          longitude: location ? location.longitude : -84.391515148404,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        }
-      }
+    <SafeAreaProvider>
+      <GestureHandlerRootView 
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6'
+        }}
       >
-        {martaStations.map((station, index) => (
-          <Marker
-            key={index}
-            coordinate={{
-              latitude: station.latitude,
-              longitude: station.longitude,
-            }}
-            title={station.name}
-            onPress={() => router.push({
-              pathname: "/modal", 
-              params: { stationName: station.apiName }}
-            )}
-          >
-            <View style={styles.markerContainer}>
-              <Image 
-                source={require('../../assets/images/trainicon.png')}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </View>
-          </Marker>
-        ))}
-
-        {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => {
-          const direction = train.DIRECTION?.toUpperCase();
-          const line = train.LINE?.charAt(0).toUpperCase() + train.LINE?.slice(1).toLowerCase();
-          const iconText = `${direction}${line}`
-          const icon = trainIcons[iconText] || require('../../assets/images/react-logo.png');
-          
-          return (
-          <Marker
-            key={index}
-            coordinate={{
-              latitude: +train.LATITUDE,
-              longitude: +train.LONGITUDE,
-            }}
-            title={`${train.LINE} - ${train.DESTINATION}`}
-            description={`Next arrival: ${train.STATION} at ${train.NEXT_ARR}`}
-          >
-            <View style={styles.markerContainer}>
-              <Image 
-                source={icon}
-                style={{ width: 25, height: 25 }}
-                resizeMode="contain"
-              />
-            </View>
-          </Marker>
-          )
+        <View style={styles.container}>
+          <MapView 
+            style={styles.map} 
+            provider="google"
+            pitchEnabled={false}
+            rotateEnabled={false}
+            showsUserLocation={true}
+            onPanDrag={() => {}}
+            customMapStyle={isDark ? mapStyle : []}
+            initialRegion={
+              {
+              latitude: location ? location.latitude : 33.753962804699015,
+              longitude: location ? location.longitude : -84.391515148404,
+              latitudeDelta: 0.02,
+              longitudeDelta: 0.02,
+            }
           }
-        )}
-      </MapView>
+          >
+            {martaStations.map((station, index) => (
+              <Marker
+                key={index}
+                coordinate={{
+                  latitude: station.latitude,
+                  longitude: station.longitude,
+                }}
+                title={station.name}
+                onPress={() => router.push({
+                  pathname: "/modal", 
+                  params: { stationName: station.apiName }}
+                )}
+              >
+                <View style={styles.markerContainer}>
+                  <Image 
+                    source={require('../../assets/images/trainicon.png')}
+                    style={{ width: 15, height: 15 }}
+                    resizeMode="contain"
+                  />
+                </View>
+              </Marker>
+            ))}
 
-    </View>
+            {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => {
+              const direction = train.DIRECTION?.toUpperCase();
+              const line = train.LINE?.charAt(0).toUpperCase() + train.LINE?.slice(1).toLowerCase();
+              const iconText = `${direction}${line}`
+              const icon = trainIcons[iconText] || require('../../assets/images/react-logo.png');
+              
+              return (
+              <Marker
+                key={index}
+                coordinate={{
+                  latitude: +train.LATITUDE,
+                  longitude: +train.LONGITUDE,
+                }}
+                title={`${train.LINE} - ${train.DESTINATION}`}
+                description={`Next arrival: ${train.STATION} at ${train.NEXT_ARR}`}
+              >
+                <View style={styles.markerContainer}>
+                  <Image 
+                    source={icon}
+                    style={{ width: 25, height: 25 }}
+                    resizeMode="contain"
+                  />
+                </View>
+              </Marker>
+              )
+              }
+            )}
+          </MapView>
+
+          <BottomSheet
+            ref={bottomSheetRef}
+            snapPoints={['35%','100%']}
+            onChange={handleSheetChanges}
+            enableDynamicSizing={false}
+            enablePanDownToClose={false}
+            style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+            }}
+            backgroundStyle={{
+              backgroundColor: 'black'
+            }}
+            handleStyle={{
+              backgroundColor: isDark ? '#000' : '#F2F2F6',
+              borderTopLeftRadius: 64,
+              borderTopRightRadius: 64,
+            }}
+            handleIndicatorStyle={{
+              backgroundColor: isDark ? '#FFF' : '#000'
+            }}
+          >
+            <Text style={{
+              color: textColor,
+              fontFamily: 'Arial',
+              fontSize: 30,
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4,
+              textAlign: 'center'
+            }}>
+              Nearest Station:
+            </Text>
+            <Text style={{
+              color: textColor,
+              fontFamily: 'Arial',
+              fontSize: 30,
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 4,
+              paddingVertical: 2,
+              borderRadius: 4,
+              textAlign: 'center'
+            }}>
+              {nearestStation?.name}
+            </Text>
+            <BottomSheetFlatList
+              data={nearestStationArrivals}
+              keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
+              renderItem={({ item }: { item: Train }) => (
+                <View
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    marginVertical: 6,
+                    marginHorizontal: 12,
+                    borderRadius: 16,
+                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                    borderLeftWidth: 6,
+                    borderLeftColor:
+                      item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                      item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                      item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                      item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                      '#808080',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 3,
+                    elevation: 2,
+                    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                  }}
+                >
+                  <Text style={{
+                    color: isDark ? '#FFF' : '#000',
+                    fontFamily: 'Arial',
+                    fontSize: 30,
+                    fontWeight: 'bold',
+                    backgroundColor: 'transparent',
+                    paddingHorizontal: 4,
+                    paddingVertical: 2,
+                    borderRadius: 4
+                  }}>
+                    {item.LINE} | {item.DESTINATION}
+                  </Text>
+                  <Text style={{    
+                    color: isDark ? '#FFF' : '#000',
+                    fontFamily: 'Arial',
+                    fontSize: 20,
+                    fontWeight: '600',
+                    backgroundColor: 'transparent',
+                    paddingHorizontal: 4,
+                    paddingVertical: 2,
+                    borderRadius: 4
+                  }}>
+                    {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
+                  </Text>
+                </View>
+            )}
+              //contentContainerStyle={{ paddingBottom: 40 }}
+              ListEmptyComponent={
+                <View style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'black',
+                        width: '100%',
+                      }}
+                >
+                  <Text style={{    
+                      color: 'white',
+                      fontFamily: 'Arial',
+                      fontSize: 20,
+                      fontWeight: '600',
+                      backgroundColor: '#000',
+                      paddingHorizontal: 4,
+                      paddingVertical: 2,
+                  }}
+                  >
+                    No trains found for this station.
+                  </Text>
+                </View>
+                  }
+            />
+          </BottomSheet>
+        </View>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 
@@ -463,5 +657,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 2,
     borderRadius: 4,
-  }
+  },
+    contentContainer: {
+    flex: 1,
+    padding: 36,
+    alignItems: 'center',
+  },
 });
