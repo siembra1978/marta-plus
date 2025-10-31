@@ -393,7 +393,8 @@ export default function HomeScreen() {
             title={station.name}
             onPress={() => router.push({
               pathname: "/modal", 
-              params: { stationName: station.apiName }})}
+              params: { stationName: station.apiName }}
+            )}
           >
             <View style={styles.markerContainer}>
               <Image 
@@ -445,6 +446,7 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+    flex: 1
   },
   markerText: {
     color: 'white',
