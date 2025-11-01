@@ -178,7 +178,7 @@ export default function ModalScreen() {
               <Text style={{
                 color: isDark ? '#FFF' : '#000',
                 fontFamily: 'Arial',
-                fontSize: 30,
+                fontSize: 25,
                 fontWeight: 'bold',
                 backgroundColor: 'transparent',
                 paddingHorizontal: 4,
@@ -197,7 +197,7 @@ export default function ModalScreen() {
                 paddingVertical: 2,
                 borderRadius: 4
               }}>
-                {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
+                {item.WAITING_SECONDS < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
               </Text>
             </View>
           )}

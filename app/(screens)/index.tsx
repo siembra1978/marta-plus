@@ -462,7 +462,7 @@ export default function HomeScreen() {
                 <View style={styles.markerContainer}>
                   <Image 
                     source={require('../../assets/images/trainicon.png')}
-                    style={{ width: 15, height: 15 }}
+                    style={{ width: 20, height: 20 }}
                     resizeMode="contain"
                   />
                 </View>
@@ -509,7 +509,7 @@ export default function HomeScreen() {
                 backgroundColor: 'transparent',
             }}
             backgroundStyle={{
-              backgroundColor: 'black'
+              backgroundColor: isDark ? '#000' : '#F2F2F6'
             }}
             handleStyle={{
               backgroundColor: isDark ? '#000' : '#F2F2F6',
@@ -578,7 +578,7 @@ export default function HomeScreen() {
                   <Text style={{
                     color: isDark ? '#FFF' : '#000',
                     fontFamily: 'Arial',
-                    fontSize: 30,
+                    fontSize: 25,
                     fontWeight: 'bold',
                     backgroundColor: 'transparent',
                     paddingHorizontal: 4,
@@ -597,7 +597,8 @@ export default function HomeScreen() {
                     paddingVertical: 2,
                     borderRadius: 4
                   }}>
-                    {item.NEXT_ARR} | {item.WAITING_TIME} | {item.WAITING_SECONDS}s
+                  {item.WAITING_SECONDS < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
+
                   </Text>
                 </View>
             )}
