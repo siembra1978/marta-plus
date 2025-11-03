@@ -1,12 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Platform, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker } from 'react-native-maps';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const mapStyle = [
   {
@@ -279,6 +280,7 @@ type Train = {
   LATITUDE: string;
   LONGITUDE: string;
 }
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 const martaUrl = process.env.EXPO_PUBLIC_MARTA_API_URL!;
 
@@ -286,12 +288,31 @@ if (!martaUrl) {
   throw new Error("Missing EXPO_PUBLIC_MARTA_API_URL environment variable");
 }
 
+export function TrainArrivalsFlatSheet() {
+  return (
+    <Text style={{color: 'white'}}>h</Text>
+  )
+}
+
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme == 'dark';
   const textColor = isDark ? '#fff' : '#000';
 
+  const activeColor = isDark ? '#fff' : '#000';
+  const inactiveColor = isDark ? '#bbb' : '#555';
+  const activeBg = isDark ? '#222' : '#e6e6e6';
+
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const insets = useSafeAreaInsets();
+
+  const buttons: { label: string; icon: IoniconName }[] = [
+    { label: 'Trains', icon: 'subway' },
+    { label: 'Buses', icon: 'bus' },
+    { label: 'Streetcar', icon: 'train' },
+  ];
+  const [selectedTransport, setSelectedTransport] = useState('Trains');
 
   const handleSheetChanges = useCallback((index: number) => {
     console.log('handleSheetChanges', index);
@@ -520,113 +541,189 @@ export default function HomeScreen() {
               backgroundColor: isDark ? '#FFF' : '#000'
             }}
           >
-            <Text style={{
-              color: textColor,
-              fontFamily: 'Arial',
-              fontSize: 30,
-              fontWeight: 'bold',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4,
-              textAlign: 'center'
-            }}>
-              Nearest Station:
-            </Text>
-            <Text style={{
-              color: textColor,
-              fontFamily: 'Arial',
-              fontSize: 30,
-              fontWeight: 'bold',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingVertical: 2,
-              borderRadius: 4,
-              textAlign: 'center'
-            }}>
-              {nearestStation?.name}
-            </Text>
-            <BottomSheetFlatList
-              data={nearestStationArrivals}
-              keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
-              renderItem={({ item }: { item: Train }) => (
-                <View
-                  style={{
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    marginVertical: 6,
-                    marginHorizontal: 12,
-                    borderRadius: 16,
-                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                    borderLeftWidth: 6,
-                    borderLeftColor:
-                      item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
-                      item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
-                      item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
-                      item.LINE.toLowerCase() === 'green' ? '#388E3C' :
-                      '#808080',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.15,
-                    shadowRadius: 3,
-                    elevation: 2,
-                    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-                  }}
-                >
-                  <Text style={{
-                    color: isDark ? '#FFF' : '#000',
-                    fontFamily: 'Arial',
-                    fontSize: 25,
-                    fontWeight: 'bold',
-                    backgroundColor: 'transparent',
-                    paddingHorizontal: 4,
-                    paddingVertical: 2,
-                    borderRadius: 4
-                  }}>
-                    {item.LINE} | {item.DESTINATION}
-                  </Text>
-                  <Text style={{    
-                    color: isDark ? '#FFF' : '#000',
-                    fontFamily: 'Arial',
-                    fontSize: 20,
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    paddingHorizontal: 4,
-                    paddingVertical: 2,
-                    borderRadius: 4
-                  }}>
-                  {parseInt(item.WAITING_SECONDS) < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
+              <Text style={{
+                color: textColor,
+                fontFamily: 'Arial',
+                fontSize: 15,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                textAlign: 'center'
+              }}>
+                Nearby
+              </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                backgroundColor: isDark ? '#000' : '#F2F2F6',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+              }}
+            >
+              {buttons.map((btn, i) => {
 
-                  </Text>
-                </View>
-            )}
-              //contentContainerStyle={{ paddingBottom: 40 }}
-              ListEmptyComponent={
-                <View style={{
+                return (
+                  <Pressable
+                    key={i}
+                    onPress={() => setSelectedTransport(btn.label)}
+                    style={({ pressed }) => [
+                      {
                         flex: 1,
+                        flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: 'black',
-                        width: '100%',
+                        borderRadius: 25,
+                        padding: 10,
+                        marginHorizontal: 5,
+                        backgroundColor: selectedTransport == btn.label ? activeBg : pressed ? isDark ? '#333': '#ddd': 'transparent',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={btn.icon}
+                      size={25}
+                      color={selectedTransport === btn.label ? activeColor : inactiveColor}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{
+                        color: selectedTransport === btn.label ? activeColor : inactiveColor,
+                        fontFamily: 'Arial',
+                        fontSize: 15,
+                        fontWeight: 'bold',
                       }}
-                >
-                  <Text style={{    
-                      color: 'white',
+                    >
+                      {btn.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {selectedTransport === 'Trains' ? (
+            <View>
+              <Text style={{
+                color: textColor,
+                fontFamily: 'Arial',
+                fontSize: 35,
+                fontWeight: 'bold',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4,
+                textAlign: 'center'
+              }}>
+                Train Arrivals
+              </Text>
+              <Text style={{
+                color: textColor,
+                fontFamily: 'Arial',
+                fontSize: 30,
+                fontWeight: 'bold',
+                backgroundColor: '#1976D2',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 0,
+                textAlign: 'center'
+              }}>
+                {nearestStation?.name} Station
+              </Text>
+
+              <BottomSheetFlatList
+                data={nearestStationArrivals}
+                keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
+                renderItem={({ item }: { item: Train }) => (
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      marginVertical: 6,
+                      marginHorizontal: 12,
+                      borderRadius: 16,
+                      backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                      borderLeftWidth: 6,
+                      borderLeftColor:
+                        item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                        item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                        item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                        item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                        '#808080',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 3,
+                      elevation: 2,
+                      overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                    }}
+                  >
+                    <Text style={{
+                      color: isDark ? '#FFF' : '#000',
+                      fontFamily: 'Arial',
+                      fontSize: 25,
+                      fontWeight: 'bold',
+                      backgroundColor: 'transparent',
+                      paddingHorizontal: 4,
+                      paddingVertical: 2,
+                      borderRadius: 4
+                    }}>
+                      {item.LINE} | {item.DESTINATION}
+                    </Text>
+                    <Text style={{    
+                      color: isDark ? '#FFF' : '#000',
                       fontFamily: 'Arial',
                       fontSize: 20,
                       fontWeight: '600',
-                      backgroundColor: '#000',
+                      backgroundColor: 'transparent',
                       paddingHorizontal: 4,
                       paddingVertical: 2,
-                  }}
+                      borderRadius: 4
+                    }}>
+                    {parseInt(item.WAITING_SECONDS) < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
+
+                    </Text>
+                  </View>
+              )}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
+                ListEmptyComponent={
+                  <View style={{
+                          flex: 1,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: 'black',
+                          width: '100%',
+                        }}
                   >
-                    No trains found for this station.
-                  </Text>
-                </View>
-                  }
-            />
+                    <Text style={{    
+                        color: 'white',
+                        fontFamily: 'Arial',
+                        fontSize: 20,
+                        fontWeight: '600',
+                        backgroundColor: '#000',
+                        paddingHorizontal: 4,
+                        paddingVertical: 2,
+                    }}
+                    >
+                      No trains found for this station.
+                    </Text>
+                  </View>
+                    }
+              />
+            </View>
+            ) :
+            selectedTransport === 'Buses' ? (
+              <View style={{backgroundColor: isDark ? '#000' : '#F2F2F6', flex: 1, alignContent:'center'}}>
+                <Text style={{color: textColor, textAlign: 'center'}}>insert bus stuff here</Text>
+              </View>
+            ) :
+            selectedTransport ==='Streetcar' ? (
+              <View style={{backgroundColor: isDark ? '#000' : '#F2F2F6', flex: 1, alignContent:'center'}}>
+                <Text style={{color: textColor, textAlign: 'center'}}>insert streetcar stuff or something else here</Text>
+              </View>
+            ) : null}
           </BottomSheet>
         </View>
       </GestureHandlerRootView>

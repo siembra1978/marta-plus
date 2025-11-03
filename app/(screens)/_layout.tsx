@@ -16,7 +16,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps){
   return(
     <View style={{ flex: 1 }}>
       <View style={{ padding: 16, paddingTop: 70, alignItems:"center"}}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign:'center', color: textColor}}>MARTA+</Text>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign:'center', color: textColor}}>Perimeter Transit</Text>
       </View>
 
       <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>

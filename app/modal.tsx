@@ -197,7 +197,7 @@ export default function ModalScreen() {
                 paddingVertical: 2,
                 borderRadius: 4
               }}>
-                {item.WAITING_SECONDS < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
+                {parseInt(item.WAITING_SECONDS) < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
               </Text>
             </View>
           )}
