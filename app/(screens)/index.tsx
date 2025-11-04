@@ -452,7 +452,7 @@ export default function HomeScreen() {
         <View style={styles.container}>
           <MapView 
             style={styles.map} 
-            provider="google"
+            //provider="google"
             pitchEnabled={false}
             rotateEnabled={false}
             showsUserLocation={true}
