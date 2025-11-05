@@ -422,7 +422,7 @@ export default function HomeScreen() {
     })();
   }, []);
 
-    if (isLoading) {
+  if (isLoading) {
     return (
       <SafeAreaProvider>
         <View style={{backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6', flex: 1, alignItems:'center', justifyContent: 'center'}}>
@@ -439,7 +439,7 @@ export default function HomeScreen() {
         </View>
       </SafeAreaProvider>
     );
-  }
+  } 
 
   return (
     <SafeAreaProvider>
