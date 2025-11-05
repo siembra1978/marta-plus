@@ -14,6 +14,12 @@ export default function BusTracking() {
     const textColor = isDark ? '#fff' : '#000';
     const router = useRouter();
 
+    var protobuf = require("protobufjs");
+
+    protobuf.load("../../assets/misc/gtfs-realtime.proto", function(err, root){
+      
+    })
+
   return (
     <View style={{backgroundColor: backgroundColor, flex: 1, alignContent:'center'}}>
         <Text style={{color: textColor, textAlign: 'center'}}>hi im marty!</Text>
