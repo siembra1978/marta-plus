@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, useColorScheme } from 'react-native';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 
@@ -16,8 +16,28 @@ export default function HomeScreen() {
         >
         </Image>
       }>
-        <Text style={styles.textFont}>Service Alerts (Example)</Text>
-        <Text style={styles.textEntry}>
+        <Text style={{
+          color: textColor,
+          fontFamily: 'Arial',
+          fontSize: 25,
+          fontWeight: '600',
+          backgroundColor: 'transparent',
+          paddingHorizontal: 4,
+          paddingVertical: 2,
+          borderRadius: 4}}
+        >
+          Service Alerts (Example)
+        </Text>
+        <Text style={{
+          color: textColor,
+          fontFamily: 'Arial',
+          fontSize: 15,
+          fontWeight: '600',
+          backgroundColor: 'transparent',
+          paddingHorizontal: 4,
+          paddingVertical: 2,
+          borderRadius: 4}}
+        >
           Red and Gold line trains will not stop at Garnett, due to platform renovations. Bus shuttle service will be provided, between Garnett and Five Points. Visit https://itsmarta.com/garnettstationrehab.aspx
           xpire at: 10/22/2025 06:00 AM
         </Text>
@@ -34,25 +54,5 @@ const styles = StyleSheet.create({
   stepContainer: {
     gap: 8,
     marginBottom: 8,
-  },
-  textFont: {
-    color: 'white',
-    fontFamily: 'Arial',
-    fontSize: 25,
-    fontWeight: '600',
-    backgroundColor: 'transparent',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4
-  },
-  textEntry: {
-    color: 'white',
-    fontFamily: 'Arial',
-    fontSize: 15,
-    fontWeight: '600',
-    backgroundColor: 'transparent',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4
   },
 });

@@ -618,7 +618,7 @@ export default function HomeScreen() {
                 Train Arrivals
               </Text>
               <Text style={{
-                color: textColor,
+                color: 'white',
                 fontFamily: 'Arial',
                 fontSize: 30,
                 fontWeight: 'bold',
