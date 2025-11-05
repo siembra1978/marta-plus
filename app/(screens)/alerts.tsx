@@ -4,6 +4,10 @@ import { StyleSheet, Text, useColorScheme } from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const backgroundColor = isDark ? '#000' : '#fff';
+  const textColor = isDark ? '#fff' : '#000';
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#353636' }}
