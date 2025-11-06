@@ -8,6 +8,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } fr
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
 
 const mapStyle = [
   {
@@ -324,6 +325,17 @@ export default function HomeScreen() {
   const [data, setData] = useState<Train[]>([]);
   const [allData, setAllData] = useState<Train[]>([]);
   const [nearestStation, setNearestStation] = useState<{ name: string; apiName: string } | null>(null);
+  const [buses, setBuses] = useState<any[]>([]);
+
+    async function getBuses() {
+      const response = await fetch(
+        'https://gtfs-rt.itsmarta.com/TMGTFSRealTimeWebService/vehicle/VehiclePositions.pb'
+      );
+      const buffer = await response.arrayBuffer();
+      const message = GtfsRealtime.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
+      const data = GtfsRealtime.transit_realtime.FeedMessage.toObject(message, { longs: String });
+      setBuses(data.entity);
+    }
 
   const getTrains = async () => {
     if (!martaUrl) {
@@ -406,7 +418,10 @@ export default function HomeScreen() {
   useEffect(() => {
     getTrains();
     getNearestStation();
-    const interval = setInterval(getTrains, 10000);
+    getBuses();
+
+    const interval = setInterval(() => {getTrains(); getBuses(); getNearestStation();}, 10000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -452,7 +467,7 @@ export default function HomeScreen() {
         <View style={styles.container}>
           <MapView 
             style={styles.map} 
-            //provider="google"
+            provider="google"
             pitchEnabled={false}
             rotateEnabled={false}
             showsUserLocation={true}
@@ -467,55 +482,101 @@ export default function HomeScreen() {
             }
           }
           >
-            {martaStations.map((station, index) => (
-              <Marker
-                key={index}
-                coordinate={{
-                  latitude: station.latitude,
-                  longitude: station.longitude,
-                }}
-                title={station.name}
-                onPress={() => router.push({
-                  pathname: "/modal", 
-                  params: { stationName: station.apiName }}
-                )}
-              >
-                <View style={styles.markerContainer}>
-                  <Image 
-                    source={require('../../assets/images/trainicon.png')}
-                    style={{ width: 20, height: 20 }}
-                    resizeMode="contain"
-                  />
-                </View>
-              </Marker>
-            ))}
+            {selectedTransport === 'Trains' && (
+                <>
+                  {martaStations.map((station, index) => (
+                    <Marker
+                      key={index}
+                      coordinate={{
+                        latitude: station.latitude,
+                        longitude: station.longitude,
+                      }}
+                      title={station.name}
+                      /*
+                      onPress={() => router.push({
+                        pathname: "/modal", 
+                        params: { stationName: station.apiName }}
+                      )}
+                      */
+                    >
+                      <View style={styles.markerContainer}>
+                        <Image 
+                          source={require('../../assets/images/trainicon.png')}
+                          style={{ width: 20, height: 20 }}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    </Marker>
+                  ))}
 
-            {data.filter((train) => train.IS_REALTIME === "true" && train.LATITUDE && train.LONGITUDE).map((train, index) => {
-              const direction = train.DIRECTION?.toUpperCase();
-              const line = train.LINE?.charAt(0).toUpperCase() + train.LINE?.slice(1).toLowerCase();
-              const iconText = `${direction}${line}`
-              const icon = trainIcons[iconText] || require('../../assets/images/react-logo.png');
-              
-              return (
-              <Marker
-                key={index}
-                coordinate={{
-                  latitude: +train.LATITUDE,
-                  longitude: +train.LONGITUDE,
-                }}
-                title={`${train.LINE} - ${train.DESTINATION}`}
-                description={`Next arrival: ${train.STATION} at ${train.NEXT_ARR}`}
-              >
-                <View style={styles.markerContainer}>
-                  <Image 
-                    source={icon}
-                    style={{ width: 25, height: 25 }}
-                    resizeMode="contain"
-                  />
-                </View>
-              </Marker>
-              )
-              }
+                  {data
+                    .filter(
+                      (train) =>
+                        train.IS_REALTIME === "true" &&
+                        train.LATITUDE &&
+                        train.LONGITUDE
+                    )
+                    .map((train, index) => {
+                      const direction = train.DIRECTION?.toUpperCase();
+                      const line =
+                        train.LINE?.charAt(0).toUpperCase() +
+                        train.LINE?.slice(1).toLowerCase();
+                      const iconText = `${direction}${line}`;
+                      const icon =
+                        trainIcons[iconText] ||
+                        require("../../assets/images/react-logo.png");
+
+                      return (
+                        <Marker
+                          key={index}
+                          coordinate={{
+                            latitude: +train.LATITUDE,
+                            longitude: +train.LONGITUDE,
+                          }}
+                          title={`${train.TRAIN_ID} | ${train.LINE} - ${train.DESTINATION}`}
+                          description={`Next arrival: ${train.STATION} | ${train.WAITING_TIME}`}
+                        >
+                          <View style={styles.markerContainer}>
+                            <Image
+                              source={icon}
+                              style={{ width: 25, height: 25 }}
+                              resizeMode="contain"
+                            />
+                          </View>
+                        </Marker>
+                      );
+                    })}
+                </>
+            )}
+
+            {selectedTransport === 'Buses' && (
+              <>
+                {buses.map((bus) => {
+                  const pos = bus.vehicle?.position;
+                  if (!pos) return null;
+                  return (
+                    <Marker
+                      key={bus.id}
+                      coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
+                      title={`Bus ${bus.id}`}
+                    >
+                      <View style={styles.markerContainer}>
+                        <Image 
+                          source={require('../../assets/images/bus.png')}
+                          style={{ width: 20, height: 20 }}
+                          resizeMode="contain"
+                        />
+                        <Text style={{color:textColor}}>{bus.id}</Text>
+                      </View>
+                    </Marker>
+                  );
+                })}
+              </>
+            )}
+
+            {selectedTransport ==='Streetcar' && (
+              <>
+              </>
             )}
           </MapView>
 
