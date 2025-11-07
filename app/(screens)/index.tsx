@@ -289,11 +289,22 @@ if (!martaUrl) {
   throw new Error("Missing EXPO_PUBLIC_MARTA_API_URL environment variable");
 }
 
-export function TrainArrivalsFlatSheet() {
-  return (
-    <Text style={{color: 'white'}}>h</Text>
-  )
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c * 1000;
 }
+
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -326,6 +337,8 @@ export default function HomeScreen() {
   const [allData, setAllData] = useState<Train[]>([]);
   const [nearestStation, setNearestStation] = useState<{ name: string; apiName: string } | null>(null);
   const [buses, setBuses] = useState<any[]>([]);
+  const [ridingTrain, setRidingTrain] = useState(false);
+  const [nearestTrain, setNearestTrain] = useState<Train[]>([]);
 
     async function getBuses() {
       const response = await fetch(
@@ -389,10 +402,8 @@ export default function HomeScreen() {
       let minDistance = Infinity;
 
       for (let station of martaStations) {
-        const distance = Math.sqrt(
-          Math.pow(latitude - station.latitude, 2) +
-          Math.pow(longitude - station.longitude, 2)
-        );
+        const distance = haversineDistance(latitude, longitude, station.latitude, station.longitude);
+
         if (distance < minDistance) {
           minDistance = distance;
           nearest = station;
