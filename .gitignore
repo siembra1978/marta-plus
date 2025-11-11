@@ -44,3 +44,4 @@ app-example
 /android
 
 # extra
+/assets/transit_info/stop_times.txt
