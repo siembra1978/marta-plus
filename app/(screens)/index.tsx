@@ -643,7 +643,7 @@ export default function HomeScreen() {
                     >
                       <View style={styles.markerContainer}>
                         <Image 
-                          source={require('../../assets/images/bus.png')}
+                          source={require('../../assets/images/busicon.png')}
                           style={{ width: 20, height: 20 }}
                           resizeMode="contain"
                         />
