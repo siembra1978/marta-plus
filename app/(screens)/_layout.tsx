@@ -103,6 +103,14 @@ export default function DrawerLayout() {
           drawerIcon: ({color, size}) => <Ionicons name = "chatbox" size = {size} color = {color}></Ionicons>
         }}
       />
+      <Drawer.Screen
+        name="csvtest"
+        options={{
+          title: 'csv',
+          drawerLabel: 'csv',
+          drawerIcon: ({color, size}) => <Ionicons name = "chatbox" size = {size} color = {color}></Ionicons>
+        }}
+      />
     </Drawer>
   );
 }

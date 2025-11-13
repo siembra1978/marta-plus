@@ -8,29 +8,6 @@ export const unstable_settings = {
   anchor: '(screens)',
 };
 
-/*
-async function loadGtfsRealtime(buffer: ArrayBuffer) {
-  const message = GtfsRealtime.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
-  const object = GtfsRealtime.transit_realtime.FeedMessage.toObject(message, {
-    longs: String,
-    enums: String,
-    bytes: String,
-  });
-  return object;
-}
-
-async function getBuses() {
-  const response = await fetch("https://gtfs-rt.itsmarta.com/TMGTFSRealTimeWebService/vehicle/VehiclePositions.pb");
-  //console.log("Content-Type:", response.headers.get("content-type"));
-  const buffer = await response.arrayBuffer();
-  const bytes = new Uint8Array(buffer).slice(0, 20);
-  //console.log("First 20 bytes:", Array.from(bytes));
-
-  const gtfsData = await loadGtfsRealtime(buffer);
-  //console.log(gtfsData);
-}
-*/
-
 export default function BusTracking() {
   const [buses, setBuses] = useState<any[]>([]);
 
@@ -53,7 +30,7 @@ export default function BusTracking() {
   return (
     <MapView
       style={{ flex: 1 }}
-      provider="google"
+      //provider="google"
       initialRegion={{
         latitude: 33.749,
         longitude: -84.388,

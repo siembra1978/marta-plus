@@ -3,12 +3,13 @@ import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
+import shapesRaw from '../../assets/transit_info/shapes.json';
 
 const mapStyle = [
   {
@@ -281,6 +282,30 @@ type Train = {
   LATITUDE: string;
   LONGITUDE: string;
 }
+
+interface ShapePoint {
+  shape_id: string;
+  shape_pt_lat: string;
+  shape_pt_lon: string;
+  shape_pt_sequence: string;
+}
+
+const shapes = shapesRaw as ShapePoint[];
+
+const railLines: Record<string, string> = {
+  BLUE: '136023',
+  GREEN: '136065',
+  RED: '136081',
+  GOLD: '136044',
+};
+
+const lineColors: Record<string, string> = {
+  BLUE: '#1976D2',
+  GREEN: '#388E3C',
+  RED: '#D32F2F',
+  GOLD: '#FFD700',
+};
+
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 const martaUrl = process.env.EXPO_PUBLIC_MARTA_API_URL!;
@@ -305,8 +330,29 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c * 1000;
 }
 
-
 export default function HomeScreen() {
+  const lineCoords = useMemo(() => {
+    const result: Record<string, { latitude: number; longitude: number }[]> = {};
+
+    Object.entries(railLines).forEach(([lineName, shapeId]) => {
+      const coords = shapes
+        .filter((s) => s.shape_id === shapeId)
+        .map((s) => ({
+          latitude: parseFloat(s.shape_pt_lat),
+          longitude: parseFloat(s.shape_pt_lon),
+          seq: parseInt(s.shape_pt_sequence, 10),
+        }))
+        .sort((a, b) => a.seq - b.seq)
+        .map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
+
+      result[lineName] = coords;
+    });
+
+    return result;
+  }, []);
+
+  const mapRef = useRef<MapView>(null);
+
   const colorScheme = useColorScheme();
   const isDark = colorScheme == 'dark';
   const textColor = isDark ? '#fff' : '#000';
@@ -339,6 +385,7 @@ export default function HomeScreen() {
   const [buses, setBuses] = useState<any[]>([]);
   const [ridingTrain, setRidingTrain] = useState(false);
   const [nearestTrain, setNearestTrain] = useState<Train[]>([]);
+  const [selectedLine, setSelectedLine] = useState("ALL");
 
     async function getBuses() {
       const response = await fetch(
@@ -422,8 +469,23 @@ export default function HomeScreen() {
     }
   };
 
+  function focusOn(lat: number, lon: number) {
+    console.log("focusing!")
+    bottomSheetRef.current?.collapse();
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lat,
+        longitude: lon,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
+      500
+    );
+  }
+
   const nearestStationArrivals = allData
       .filter((train) => train.STATION === nearestStation?.apiName)
+      //.filter((train) => train.STATION === "FIVE POINTS STATION")
       .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
 
   useEffect(() => {
@@ -478,6 +540,7 @@ export default function HomeScreen() {
         <View style={styles.container}>
           <MapView 
             style={styles.map} 
+            ref={mapRef}
             provider="google"
             pitchEnabled={false}
             rotateEnabled={false}
@@ -495,6 +558,14 @@ export default function HomeScreen() {
           >
             {selectedTransport === 'Trains' && (
                 <>
+                  {Object.keys(lineCoords).map((lineName) => (
+                    <Polyline
+                      key={lineName}
+                      coordinates={lineCoords[lineName]}
+                      strokeColors={[lineColors[lineName]]}
+                      strokeWidth={5}
+                    />
+                  ))}
                   {martaStations.map((station, index) => (
                     <Marker
                       key={index}
@@ -503,12 +574,7 @@ export default function HomeScreen() {
                         longitude: station.longitude,
                       }}
                       title={station.name}
-                      /*
-                      onPress={() => router.push({
-                        pathname: "/modal", 
-                        params: { stationName: station.apiName }}
-                      )}
-                      */
+                      onPress={() => focusOn(station.latitude, station.longitude)}
                     >
                       <View style={styles.markerContainer}>
                         <Image 
@@ -546,8 +612,11 @@ export default function HomeScreen() {
                           }}
                           title={`${train.TRAIN_ID} | ${train.LINE} - ${train.DESTINATION}`}
                           description={`Next arrival: ${train.STATION} | ${train.WAITING_TIME}`}
+                          onPress={() => focusOn(+train.LATITUDE, +train.LONGITUDE)}
                         >
-                          <View style={styles.markerContainer}>
+                          <View 
+                            style={styles.markerContainer}
+                          >
                             <Image
                               source={icon}
                               style={{ width: 25, height: 25 }}
@@ -570,6 +639,7 @@ export default function HomeScreen() {
                       key={bus.id}
                       coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
                       title={`Bus ${bus.id}`}
+                      onPress={() => focusOn(parseFloat(pos.latitude), parseFloat(pos.longitude))}
                     >
                       <View style={styles.markerContainer}>
                         <Image 
@@ -707,57 +777,90 @@ export default function HomeScreen() {
                 data={nearestStationArrivals}
                 keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
                 renderItem={({ item }: { item: Train }) => (
-                  <View
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
-                      marginVertical: 6,
-                      marginHorizontal: 12,
-                      borderRadius: 16,
-                      backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                      borderLeftWidth: 6,
-                      borderLeftColor:
-                        item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
-                        item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
-                        item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
-                        item.LINE.toLowerCase() === 'green' ? '#388E3C' :
-                        '#808080',
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.15,
-                      shadowRadius: 3,
-                      elevation: 2,
-                      overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-                    }}
+                  <Pressable
+                    onPress={() => focusOn(parseFloat(item.LATITUDE), parseFloat(item.LONGITUDE))}
                   >
-                    <Text style={{
-                      color: isDark ? '#FFF' : '#000',
-                      fontFamily: 'Arial',
-                      fontSize: 25,
-                      fontWeight: 'bold',
-                      backgroundColor: 'transparent',
-                      paddingHorizontal: 4,
-                      paddingVertical: 2,
-                      borderRadius: 4
-                    }}>
-                      {item.LINE} | {item.DESTINATION}
-                    </Text>
-                    <Text style={{    
-                      color: isDark ? '#FFF' : '#000',
-                      fontFamily: 'Arial',
-                      fontSize: 20,
-                      fontWeight: '600',
-                      backgroundColor: 'transparent',
-                      paddingHorizontal: 4,
-                      paddingVertical: 2,
-                      borderRadius: 4
-                    }}>
-                    {parseInt(item.WAITING_SECONDS) < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
+                    <View
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingVertical: 12,
+                        paddingHorizontal: 16,
+                        marginVertical: 6,
+                        marginHorizontal: 12,
+                        borderRadius: 16,
+                        backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                        borderWidth: 3,
+                        borderColor:
+                          item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                          item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                          item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                          item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                          '#808080',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 3,
+                        elevation: 2,
+                        overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                      }}
+                    >
+                      <Text style={{
+                        color: isDark ? '#FFF' : '#000',
+                        fontFamily: 'Arial',
+                        fontSize: 25,
+                        fontWeight: 'bold',
+                        paddingHorizontal: 4,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                        backgroundColor:
+                          item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                          item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                          item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                          item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                          '#808080',
+                        textShadowRadius: 10,
+                        textShadowOffset: { width: 5, height: 5 }
+                      }}>
+                        {item.LINE}
+                      </Text>
+                      <Text style={{
+                        color: isDark ? '#FFF' : '#000',
+                        fontFamily: 'Arial',
+                        fontSize: 25,
+                        fontWeight: 'bold',
+                        backgroundColor: 'transparent',
+                        paddingHorizontal: 4,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                      }}>
+                        {item.DESTINATION}
+                      </Text>
+                      <View style={{flexDirection: 'row'}}>
+                        <Text style={{    
+                          color: isDark ? '#FFF' : '#000',
+                          fontFamily: 'Arial',
+                          fontSize: 20,
+                          fontWeight: '600',
+                          backgroundColor: 'transparent',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                          borderRadius: 4
+                        }}>
+                        {parseInt(item.WAITING_SECONDS) < 60 ? `${item.WAITING_SECONDS}s` : `${item.WAITING_TIME}`}
+                        </Text>
 
-                    </Text>
-                  </View>
+                        {item.IS_REALTIME === "true" && (
+                          <Ionicons
+                            name={"radio"}
+                            size={25}
+                            color={isDark ? '#FFF' : '#000'}
+                            style={{ marginRight: 8 , paddingHorizontal: 2}}
+                          />
+                        )}
+                      </View>
+                    </View>
+                  </Pressable>
               )}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
                 ListEmptyComponent={
