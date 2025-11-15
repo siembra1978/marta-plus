@@ -47,12 +47,15 @@ const martaStations = [
   { name: 'Georgia State', latitude: 33.7505, longitude: -84.3861, apiName: 'GEORGIA STATE STATION'},
   { name: 'King Memorial', latitude: 33.750101359063535, longitude: -84.37479632943702, apiName: 'KING MEMORIAL STATION'},
   { name: 'Inman Park / Reynoldstown', latitude: 33.75787970045462, longitude: -84.35183468934682, apiName: 'INMAN PARK STATION'},
-  { name: 'Edgewood-Candler Park Station', latitude: 33.76206332996031, longitude: -84.33923346739087, apiName: 'EDGEWOOD CANDLER PARK STATION'},
+  { name: 'Edgewood-Candler Park', latitude: 33.76206332996031, longitude: -84.33923346739087, apiName: 'EDGEWOOD CANDLER PARK STATION'},
   { name: 'East Lake', latitude: 33.76528137160553, longitude: -84.31268608413075, apiName: 'EAST LAKE STATION'},
   { name: 'Decatur', latitude: 33.774770963754875, longitude: -84.29518864356172, apiName: 'DECATUR STATION'},
   { name: 'Avondale', latitude: 33.7751900506769, longitude: -84.28232171518957, apiName: 'AVONDALE STATION'},
   { name: 'Kensington', latitude: 33.77268962458207, longitude: -84.25178556655618, apiName: 'KENSINGTON STATION'},
-  { name: 'Indian Creek', latitude: 33.76986471874239, longitude: -84.22966006928485, apiName: 'INDIAN CREEK STATION'}
+  { name: 'Indian Creek', latitude: 33.76986471874239, longitude: -84.22966006928485, apiName: 'INDIAN CREEK STATION'},
+
+  // Green Line Only
+  { name: 'Bankhead', latitude: 33.772270360054954, longitude: -84.42894467065514, apiName: 'BANKHEAD STATION'}
 ];
 
 export default function ArrivalsScreen() {

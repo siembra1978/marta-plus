@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "marta-plus",
+    "name": "Ride285",
     "slug": "marta-plus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/tempicon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "martaplus",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
