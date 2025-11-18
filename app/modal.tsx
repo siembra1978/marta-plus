@@ -154,14 +154,14 @@ export default function ModalScreen() {
               style={{
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingVertical: 12,
+                paddingVertical: 6,
                 paddingHorizontal: 16,
                 marginVertical: 6,
                 marginHorizontal: 12,
                 borderRadius: 16,
-                backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
-                borderLeftWidth: 6,
-                borderLeftColor:
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                borderWidth: 3,
+                borderColor:
                   item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
                   item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
                   item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
@@ -176,6 +176,25 @@ export default function ModalScreen() {
               }}
             >
               <Text style={{
+                color: '#FFF',
+                fontFamily: 'Arial',
+                fontSize: 25,
+                fontWeight: 'bold',
+                paddingHorizontal: 4,
+                paddingVertical: 2,
+                borderRadius: 4,
+                backgroundColor:
+                  item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                  item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                  item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                  item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                  '#808080',
+                textShadowRadius: 10,
+                textShadowOffset: { width: 5, height: 5 }
+              }}>
+                {item.LINE.charAt(0) + item.LINE.toLowerCase().slice(1, item.LINE.length)}
+              </Text>
+              <Text style={{
                 color: isDark ? '#FFF' : '#000',
                 fontFamily: 'Arial',
                 fontSize: 25,
@@ -183,22 +202,24 @@ export default function ModalScreen() {
                 backgroundColor: 'transparent',
                 paddingHorizontal: 4,
                 paddingVertical: 2,
-                borderRadius: 4
+                borderRadius: 4,
               }}>
-                {item.LINE} | {item.DESTINATION}
+                {item.DESTINATION}
               </Text>
-              <Text style={{    
-                color: isDark ? '#FFF' : '#000',
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: '600',
-                backgroundColor: 'transparent',
-                paddingHorizontal: 4,
-                paddingVertical: 2,
-                borderRadius: 4
-              }}>
-                {parseInt(item.WAITING_SECONDS) < 60 ? `${item.NEXT_ARR} | ${item.WAITING_SECONDS}s` : `${item.NEXT_ARR} | ${item.WAITING_TIME}`}
-              </Text>
+              <View style={{flexDirection: 'row'}}>
+                <Text style={{    
+                  color: isDark ? '#FFF' : '#000',
+                  fontFamily: 'Arial',
+                  fontSize: 20,
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4
+                }}>
+                {parseInt(item.WAITING_SECONDS) < 60 ? `${item.WAITING_SECONDS}s` : `${item.WAITING_TIME}`}
+                </Text>
+              </View>
             </View>
           )}
           contentContainerStyle={{ paddingBottom: 40 }}
