@@ -6,10 +6,10 @@ import { useRouter } from 'expo-router';
 import React, { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
-import shapesRaw from '../../assets/transit_info/shapes.json';
+//import shapesRaw from '../../assets/transit_info/shapes.json';
 
 const mapStyle = [
   {
@@ -293,7 +293,7 @@ interface ShapePoint {
   shape_pt_sequence: string;
 }
 
-const shapes = shapesRaw as ShapePoint[];
+//const shapes = shapesRaw as ShapePoint[];
 
 const railLines: Record<string, string> = {
   BLUE: '136023',
@@ -337,6 +337,7 @@ export default function HomeScreen() {
   const lineCoords = useMemo(() => {
     const result: Record<string, { latitude: number; longitude: number }[]> = {};
 
+    /*
     Object.entries(railLines).forEach(([lineName, shapeId]) => {
       const coords = shapes
         .filter((s) => s.shape_id === shapeId)
@@ -349,7 +350,8 @@ export default function HomeScreen() {
         .map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
 
       result[lineName] = coords;
-  });
+    });
+    */
 
     return result;
   }, []);
@@ -494,10 +496,10 @@ export default function HomeScreen() {
         const isMovingFast = location.coords.speed && location.coords.speed > 7;
 
         if (minDistanceT <= 40 && isMovingFast) {
-          console.log("riding train")
+          //console.log("riding train")
           setRidingTrain(true);
         } else {
-          console.log("not riding train")
+          //console.log("not riding train")
           //setRidingTrain(true);
           setRidingTrain(false);
         }
@@ -652,14 +654,14 @@ export default function HomeScreen() {
           >
             {selectedTransport === 'Trains' &&  (
                 <>
-                  {Object.keys(lineCoords).map((lineName) => (
+                  {/*Object.keys(lineCoords).map((lineName) => (
                     <Polyline
                       key={lineName}
                       coordinates={lineCoords[lineName]}
                       strokeColors={[lineColors[lineName]]}
                       strokeWidth={5}
                     />
-                  ))}
+                  ))*/}
                   {martaStations.map((station, index) => (
                     <Marker
                       key={index}
