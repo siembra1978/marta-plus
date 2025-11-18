@@ -498,8 +498,8 @@ export default function HomeScreen() {
           setRidingTrain(true);
         } else {
           console.log("not riding train")
-          setRidingTrain(false);
           //setRidingTrain(true);
+          setRidingTrain(false);
         }
       }
 
