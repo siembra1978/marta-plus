@@ -349,7 +349,7 @@ export default function HomeScreen() {
         .map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
 
       result[lineName] = coords;
-    });
+  });
 
     return result;
   }, []);
@@ -387,23 +387,24 @@ export default function HomeScreen() {
   const [nearestStation, setNearestStation] = useState<{ name: string; apiName: string } | null>(null);
   const [buses, setBuses] = useState<any[]>([]);
   const [ridingTrain, setRidingTrain] = useState(false);
-  const [nearestTrain, setNearestTrain] = useState<Train[]>([]);
+  const [nearestTrain, setNearestTrain] = useState<Train | null>(null);
   const [selectedLine, setSelectedLine] = useState("ALL");
 
-    async function getBuses() {
-      const response = await fetch(
-        'https://gtfs-rt.itsmarta.com/TMGTFSRealTimeWebService/vehicle/VehiclePositions.pb'
-      );
-      const buffer = await response.arrayBuffer();
-      const message = GtfsRealtime.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
-      const data = GtfsRealtime.transit_realtime.FeedMessage.toObject(message, { longs: String });
-      setBuses(data.entity);
-    }
+  async function getBuses() {
+    const response = await fetch(
+      'https://gtfs-rt.itsmarta.com/TMGTFSRealTimeWebService/vehicle/VehiclePositions.pb'
+    );
+    const buffer = await response.arrayBuffer();
+    const message = GtfsRealtime.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
+    const data = GtfsRealtime.transit_realtime.FeedMessage.toObject(message, { longs: String });
+    setBuses(data.entity);
+    return (data.entity);
+  }
 
   const getTrains = async () => {
     if (!martaUrl) {
       console.error("No MARTA API Key Set!");
-      return;
+      return [];
     }
 
     try {
@@ -425,19 +426,24 @@ export default function HomeScreen() {
         }, {})
         );
         
-        setData(latestTrains)
+        setData(latestTrains);
+        setLoading(false);
+        return (latestTrains);
       } catch (error) {
         console.log('MARTA API Response:', json);
+        return([]);
       }
     } catch (error) {
       console.log(error)
+      return([]);
       //console.log("ERROR: " + error +" | Usually caused by MARTA API problems");
-    } finally {
-      setLoading(false);
     }
   }
 
-  const getNearestStation = async () => {
+  const initData = async () => {
+    const trains = await getTrains();
+    const buses = await getBuses();
+
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -448,20 +454,57 @@ export default function HomeScreen() {
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
 
-      let nearest = null;
-      let minDistance = Infinity;
+      let nearestStation = null;
+      let nearestTrain = null;
+      let minDistanceS = Infinity;
+      let minDistanceT = Infinity;
 
       for (let station of martaStations) {
         const distance = haversineDistance(latitude, longitude, station.latitude, station.longitude);
 
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearest = station;
+        if (distance < minDistanceS) {
+          minDistanceS = distance;
+          nearestStation = station;
         }
       }
 
-      if (nearest) {
-        setNearestStation(nearest);
+      //console.log("train length: " + trains.length);
+      if (trains && trains.length > 0) {
+        for (let train of trains) {
+          //console.log("analyzing distance from user to " + train.TRAIN_ID);
+          const distance = haversineDistance(latitude, longitude, parseFloat(train.LATITUDE), parseFloat(train.LONGITUDE));
+
+          //console.log(distance, minDistanceT);
+
+          if (distance < minDistanceT) {
+            minDistanceT = distance;
+            nearestTrain = train;
+            //console.log("nearest train calculated: " + nearestTrain.TRAIN_ID)
+          }
+        }
+
+        if (nearestTrain) {
+          //console.log("nearest train set: " + nearestTrain.TRAIN_ID)
+          setNearestTrain(nearestTrain);
+        } else {
+          console.log("no train found")
+          alert('No nearby train found.');
+        }
+
+        const isMovingFast = location.coords.speed && location.coords.speed > 7;
+
+        if (minDistanceT <= 40 && isMovingFast) {
+          console.log("riding train")
+          setRidingTrain(true);
+        } else {
+          console.log("not riding train")
+          setRidingTrain(false);
+          //setRidingTrain(true);
+        }
+      }
+
+      if (nearestStation) {
+        setNearestStation(nearestStation);
       } else {
         alert('No nearby station found.');
       }
@@ -473,7 +516,7 @@ export default function HomeScreen() {
   };
 
   function focusOn(lat: number, lon: number) {
-    console.log("focusing!")
+    //console.log("focusing!")
     bottomSheetRef.current?.collapse();
     mapRef.current?.animateToRegion(
       {
@@ -492,12 +535,8 @@ export default function HomeScreen() {
       .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
 
   useEffect(() => {
-    getTrains();
-    getNearestStation();
-    getBuses();
-
-    const interval = setInterval(() => {getTrains(); getBuses(); getNearestStation();}, 10000);
-
+    initData()
+    const interval = setInterval(() => {initData()}, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -513,6 +552,7 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  /*
   if (isLoading) {
     return (
       <SafeAreaProvider>
@@ -531,6 +571,7 @@ export default function HomeScreen() {
       </SafeAreaProvider>
     );
   } 
+  */
 
   return (
     <SafeAreaProvider>
@@ -541,6 +582,56 @@ export default function HomeScreen() {
         }}
       >
         <View style={styles.container}>
+          
+          {isLoading && (
+          <View>
+            <Text style={{    
+                  color: 'white',
+                  fontFamily: 'Arial',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                  textAlign: 'center'
+            }}>
+              Loading train data...
+            </Text>
+          </View>
+          )}
+          
+          {/*nearestTrain && (
+            <View style={{borderWidth:4, borderColor: '#000', borderBottomLeftRadius: 10, borderBottomRightRadius: 10}}>
+                <Text style={{    
+                    color: 'white',
+                    fontFamily: 'Arial',
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    backgroundColor: '#000',
+                    paddingHorizontal: 4,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    textAlign: 'center'
+              }}>
+                Now Riding
+              </Text>
+              <Text style={{    
+                    color: 'white',
+                    fontFamily: 'Arial',
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    backgroundColor: '#000',
+                    paddingHorizontal: 4,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    textAlign: 'center'
+              }}>
+                {nearestTrain.TRAIN_ID} | {nearestTrain.LINE} | {nearestTrain.STATION} @ {nearestTrain.WAITING_TIME}
+              </Text>
+            </View>
+          )*/}
+
           <MapView 
             style={styles.map} 
             ref={mapRef}
@@ -559,7 +650,7 @@ export default function HomeScreen() {
             }
           }
           >
-            {selectedTransport === 'Trains' && (
+            {selectedTransport === 'Trains' &&  (
                 <>
                   {Object.keys(lineCoords).map((lineName) => (
                     <Polyline
@@ -747,150 +838,318 @@ export default function HomeScreen() {
               })}
             </View>
 
-            {selectedTransport === 'Trains' ? (
-            <View>
-              <Text style={{
-                color: textColor,
-                fontFamily: 'Arial',
-                fontSize: 35,
-                fontWeight: 'bold',
-                backgroundColor: 'transparent',
-                paddingHorizontal: 4,
-                paddingVertical: 2,
-                borderRadius: 4,
-                textAlign: 'center'
-              }}>
-                Train Arrivals
-              </Text>
-              <Text style={{
-                color: 'white',
-                fontFamily: 'Arial',
-                fontSize: 30,
-                fontWeight: 'bold',
-                backgroundColor: '#1976D2',
-                paddingHorizontal: 4,
-                paddingVertical: 2,
-                borderRadius: 0,
-                textAlign: 'center'
-              }}>
-                {nearestStation?.name} Station
-              </Text>
+            {selectedTransport === 'Trains' && !ridingTrain ? (
+              <View>
+                <Text style={{
+                  color: textColor,
+                  fontFamily: 'Arial',
+                  fontSize: 35,
+                  fontWeight: 'bold',
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                  textAlign: 'center'
+                }}>
+                  Train Arrivals
+                </Text>
+                <Text style={{
+                  color: 'white',
+                  fontFamily: 'Arial',
+                  fontSize: 30,
+                  fontWeight: 'bold',
+                  backgroundColor: '#1976D2',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 0,
+                  textAlign: 'center'
+                }}>
+                  {nearestStation?.name} Station
+                </Text>
 
-              <BottomSheetFlatList
-                data={nearestStationArrivals}
-                keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
-                renderItem={({ item }: { item: Train }) => (
-                  <Pressable
-                    onPress={() => focusOn(parseFloat(item.LATITUDE), parseFloat(item.LONGITUDE))}
-                  >
-                    <View
-                      style={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 6,
-                        paddingHorizontal: 16,
-                        marginVertical: 6,
-                        marginHorizontal: 12,
-                        borderRadius: 16,
-                        backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                        borderWidth: 3,
-                        borderColor:
-                          item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
-                          item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
-                          item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
-                          item.LINE.toLowerCase() === 'green' ? '#388E3C' :
-                          '#808080',
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 3,
-                        elevation: 2,
-                        overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-                      }}
+                <BottomSheetFlatList
+                  data={nearestStationArrivals}
+                  keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
+                  renderItem={({ item }: { item: Train }) => (
+                    <Pressable
+                      onPress={() => focusOn(parseFloat(item.LATITUDE), parseFloat(item.LONGITUDE))}
                     >
-                      <Text style={{
-                        color: isDark ? '#FFF' : '#000',
-                        fontFamily: 'Arial',
-                        fontSize: 25,
-                        fontWeight: 'bold',
-                        paddingHorizontal: 4,
-                        paddingVertical: 2,
-                        borderRadius: 4,
-                        backgroundColor:
-                          item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
-                          item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
-                          item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
-                          item.LINE.toLowerCase() === 'green' ? '#388E3C' :
-                          '#808080',
-                        textShadowRadius: 10,
-                        textShadowOffset: { width: 5, height: 5 }
-                      }}>
-                        {item.LINE.charAt(0) + item.LINE.toLowerCase().slice(1, item.LINE.length)}
-                      </Text>
-                      <Text style={{
-                        color: isDark ? '#FFF' : '#000',
-                        fontFamily: 'Arial',
-                        fontSize: 25,
-                        fontWeight: 'bold',
-                        backgroundColor: 'transparent',
-                        paddingHorizontal: 4,
-                        paddingVertical: 2,
-                        borderRadius: 4,
-                      }}>
-                        {item.DESTINATION}
-                      </Text>
-                      <View style={{flexDirection: 'row'}}>
-                        <Text style={{    
+                      <View
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingVertical: 6,
+                          paddingHorizontal: 16,
+                          marginVertical: 6,
+                          marginHorizontal: 12,
+                          borderRadius: 16,
+                          backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                          borderWidth: 3,
+                          borderColor:
+                            item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                            item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                            item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                            item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                            '#808080',
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 3,
+                          elevation: 2,
+                          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                        }}
+                      >
+                        <Text style={{
                           color: isDark ? '#FFF' : '#000',
                           fontFamily: 'Arial',
-                          fontSize: 20,
-                          fontWeight: '600',
+                          fontSize: 25,
+                          fontWeight: 'bold',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                          backgroundColor:
+                            item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                            item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                            item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                            item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                            '#808080',
+                          textShadowRadius: 10,
+                          textShadowOffset: { width: 5, height: 5 }
+                        }}>
+                          {item.LINE.charAt(0) + item.LINE.toLowerCase().slice(1, item.LINE.length)}
+                        </Text>
+                        <Text style={{
+                          color: isDark ? '#FFF' : '#000',
+                          fontFamily: 'Arial',
+                          fontSize: 25,
+                          fontWeight: 'bold',
                           backgroundColor: 'transparent',
                           paddingHorizontal: 4,
                           paddingVertical: 2,
-                          borderRadius: 4
+                          borderRadius: 4,
                         }}>
-                        {parseInt(item.WAITING_SECONDS) < 60 ? `${item.WAITING_SECONDS}s` : `${item.WAITING_TIME}`}
+                          {item.DESTINATION}
                         </Text>
+                        <View style={{flexDirection: 'row'}}>
+                          <Text style={{    
+                            color: isDark ? '#FFF' : '#000',
+                            fontFamily: 'Arial',
+                            fontSize: 20,
+                            fontWeight: '600',
+                            backgroundColor: 'transparent',
+                            paddingHorizontal: 4,
+                            paddingVertical: 2,
+                            borderRadius: 4
+                          }}>
+                          {parseInt(item.WAITING_SECONDS) < 60 ? `${item.WAITING_SECONDS}s` : `${item.WAITING_TIME}`}
+                          </Text>
 
-                        {item.IS_REALTIME === "true" && (
-                          <Ionicons
-                            name={"radio"}
-                            size={25}
-                            color={isDark ? '#FFF' : '#000'}
-                            style={{ marginRight: 8 , paddingHorizontal: 2}}
-                          />
-                        )}
+                          {item.IS_REALTIME === "true" && (
+                            <Ionicons
+                              name={"radio"}
+                              size={25}
+                              color={isDark ? '#FFF' : '#000'}
+                              style={{ marginRight: 8 , paddingHorizontal: 2}}
+                            />
+                          )}
+                        </View>
                       </View>
-                    </View>
-                  </Pressable>
-              )}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
-                ListEmptyComponent={
-                  <View style={{
-                          flex: 1,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: 'black',
-                          width: '100%',
-                        }}
-                  >
-                    <Text style={{    
-                        color: 'white',
-                        fontFamily: 'Arial',
-                        fontSize: 20,
-                        fontWeight: '600',
-                        backgroundColor: '#000',
-                        paddingHorizontal: 4,
-                        paddingVertical: 2,
-                    }}
+                    </Pressable>
+                )}
+                  contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
+                  ListEmptyComponent={
+                    <View style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'black',
+                            width: '100%',
+                          }}
                     >
-                      No trains found for this station.
-                    </Text>
-                  </View>
-                    }
-              />
-            </View>
+                      <Text style={{    
+                          color: 'white',
+                          fontFamily: 'Arial',
+                          fontSize: 20,
+                          fontWeight: '600',
+                          backgroundColor: '#000',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                      }}
+                      >
+                        No trains found for this station.
+                      </Text>
+                    </View>
+                      }
+                />
+              </View>
+            ) :
+            selectedTransport=== 'Trains' && ridingTrain ? (
+              <View>
+                <Text style={{
+                  color: textColor,
+                  fontFamily: 'Arial',
+                  fontSize: 35,
+                  fontWeight: 'bold',
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                  textAlign: 'center'
+                }}>
+                  Upcoming Stations
+                </Text>
+                  <Text style={{
+                    color: 'white',
+                    fontFamily: 'Arial',
+                    fontSize: 30,
+                    fontWeight: 'bold',
+                    backgroundColor: 
+                      nearestTrain?.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                      nearestTrain?.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                      nearestTrain?.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                      nearestTrain?.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                      '#808080',
+                    paddingHorizontal: 4,
+                    paddingVertical: 2,
+                    borderRadius: 0,
+                    textAlign: 'center'
+                  }}>
+                    {(nearestTrain?.LINE.charAt(0) ?? "No Train Found") + nearestTrain?.LINE.toLowerCase().slice(1, nearestTrain?.LINE.length)}
+                  </Text>
+                <Text style={{
+                  color: 'white',
+                  fontFamily: 'Arial',
+                  fontSize: 30,
+                  fontWeight: 'bold',
+                  backgroundColor: 
+                    nearestTrain?.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                    nearestTrain?.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                    nearestTrain?.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                    nearestTrain?.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                    '#808080',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 0,
+                  textAlign: 'center'
+                }}>
+                  {nearestTrain?.DESTINATION}
+                </Text>
+
+                <BottomSheetFlatList
+                  data={allData.filter(t => t.TRAIN_ID === nearestTrain?.TRAIN_ID)}
+                  keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
+                  renderItem={({ item }: { item: Train }) => (
+                    <Pressable
+                      onPress={() => focusOn(parseFloat(item.LATITUDE), parseFloat(item.LONGITUDE))}
+                    >
+                      <View
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingVertical: 6,
+                          paddingHorizontal: 16,
+                          marginVertical: 6,
+                          marginHorizontal: 12,
+                          borderRadius: 16,
+                          backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                          borderWidth: 3,
+                          borderColor:
+                            item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                            item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                            item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                            item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                            '#808080',
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 3,
+                          elevation: 2,
+                          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                        }}
+                      >
+                        <Text style={{
+                          color: isDark ? '#FFF' : '#000',
+                          fontFamily: 'Arial',
+                          fontSize: 25,
+                          fontWeight: 'bold',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                          backgroundColor:
+                            item.LINE.toLowerCase() === 'red' ? '#D32F2F' :
+                            item.LINE.toLowerCase() === 'gold' ? '#FFD700' :
+                            item.LINE.toLowerCase() === 'blue' ? '#1976D2' :
+                            item.LINE.toLowerCase() === 'green' ? '#388E3C' :
+                            '#808080',
+                          textShadowRadius: 10,
+                          textShadowOffset: { width: 5, height: 5 }
+                        }}>
+                          {item.LINE.charAt(0) + item.LINE.toLowerCase().slice(1, item.LINE.length)}
+                        </Text>
+                        <Text style={{
+                          color: isDark ? '#FFF' : '#000',
+                          fontFamily: 'Arial',
+                          fontSize: 25,
+                          fontWeight: 'bold',
+                          backgroundColor: 'transparent',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                        }}>
+                          {item.STATION}
+                        </Text>
+                        <View style={{flexDirection: 'row'}}>
+                          <Text style={{    
+                            color: isDark ? '#FFF' : '#000',
+                            fontFamily: 'Arial',
+                            fontSize: 20,
+                            fontWeight: '600',
+                            backgroundColor: 'transparent',
+                            paddingHorizontal: 4,
+                            paddingVertical: 2,
+                            borderRadius: 4
+                          }}>
+                          {parseInt(item.WAITING_SECONDS) < 60 ? `${item.WAITING_SECONDS}s` : `${item.WAITING_TIME}`}
+                          </Text>
+
+                          {item.IS_REALTIME === "true" && (
+                            <Ionicons
+                              name={"radio"}
+                              size={25}
+                              color={isDark ? '#FFF' : '#000'}
+                              style={{ marginRight: 8 , paddingHorizontal: 2}}
+                            />
+                          )}
+                        </View>
+                      </View>
+                    </Pressable>
+                )}
+                  contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
+                  ListEmptyComponent={
+                    <View style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'black',
+                            width: '100%',
+                          }}
+                    >
+                      <Text style={{    
+                          color: 'white',
+                          fontFamily: 'Arial',
+                          fontSize: 20,
+                          fontWeight: '600',
+                          backgroundColor: '#000',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                      }}
+                      >
+                        No trains found for this station.
+                      </Text>
+                    </View>
+                      }
+                />
+              </View>
             ) :
             selectedTransport === 'Buses' ? (
               <View style={{backgroundColor: isDark ? '#000' : '#F2F2F6', flex: 1, alignContent:'center'}}>
