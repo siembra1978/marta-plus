@@ -16,7 +16,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps){
   return(
     <View style={{ flex: 1 }}>
       <View style={{ padding: 16, paddingTop: 70, alignItems:"center"}}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign:'center', color: textColor}}>Perimeter Transit</Text>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign:'center', color: textColor}}>Ride285</Text>
       </View>
 
       <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
@@ -27,7 +27,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps){
       </DrawerContentScrollView>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Powered by Siembra Software</Text>
+        <Text style={styles.footerText}>Powered by Siembra Labs</Text>
       </View>
     </View>
       )
@@ -100,14 +100,6 @@ export default function DrawerLayout() {
         options={{
           title: 'Marty.ai',
           drawerLabel: 'Marty.ai',
-          drawerIcon: ({color, size}) => <Ionicons name = "chatbox" size = {size} color = {color}></Ionicons>
-        }}
-      />
-      <Drawer.Screen
-        name="csvtest"
-        options={{
-          title: 'csv',
-          drawerLabel: 'csv',
           drawerIcon: ({color, size}) => <Ionicons name = "chatbox" size = {size} color = {color}></Ionicons>
         }}
       />
