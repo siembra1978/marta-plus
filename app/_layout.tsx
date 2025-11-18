@@ -21,7 +21,7 @@ export default function RootLayout() {
         options={{
           presentation: 'modal',
           animation: 'slide_from_bottom',
-          title: 'Arrivals',
+          title: 'Train Arrivals',
           headerShown: true,
           headerTintColor: isDark ? '#fff' : '#000',
           headerStyle: {
