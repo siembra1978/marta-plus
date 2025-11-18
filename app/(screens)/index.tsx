@@ -1014,7 +1014,7 @@ export default function HomeScreen() {
                     borderRadius: 0,
                     textAlign: 'center'
                   }}>
-                    {(nearestTrain?.LINE.charAt(0) ?? "No Train Found") + nearestTrain?.LINE.toLowerCase().slice(1, nearestTrain?.LINE.length)}
+                    {(nearestTrain?.LINE.charAt(0) ?? "No Train ") + nearestTrain?.LINE.toLowerCase().slice(1, nearestTrain?.LINE.length)}
                   </Text>
                 <Text style={{
                   color: 'white',
