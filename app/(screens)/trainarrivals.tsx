@@ -111,7 +111,7 @@ export default function ArrivalsScreen() {
   };
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: "#000" }}>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6' }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -205,7 +205,9 @@ export default function ArrivalsScreen() {
                 paddingHorizontal: 16,
                 marginVertical: 6,
                 marginHorizontal: 32,
+                borderColor: isDark ? '#aaa' : '#666',
                 borderRadius: 16,
+                borderWidth: 2,
                 backgroundColor: isDark ? '#1C1C1E' : '#F2F2F6',
                 overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
               }}
