@@ -854,15 +854,28 @@ export default function HomeScreen() {
                   Train Arrivals
                 </Text>
                 <Text style={{
-                  color: 'white',
-                  fontFamily: 'Arial',
-                  fontSize: 30,
-                  fontWeight: 'bold',
-                  backgroundColor: '#1976D2',
-                  paddingHorizontal: 4,
-                  paddingVertical: 2,
-                  borderRadius: 0,
-                  textAlign: 'center'
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        textAlign: 'center',
+                        color: 'white',
+                        fontSize: 25,
+                        paddingVertical: 6,
+                        paddingHorizontal: 16,
+                        marginVertical: 6,
+                        marginHorizontal: 12,
+                        borderRadius: 16,
+                        fontWeight: 'bold',
+                        backgroundColor: '#1976D2',
+                        borderWidth: 3,
+                        borderColor:'#1976D2',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 3,
+                        elevation: 2,
+                        textShadowRadius: 10,
+                        textShadowOffset: { width: 5, height: 5 },
+                        overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
                 }}>
                   {nearestStation?.name} Station
                 </Text>
