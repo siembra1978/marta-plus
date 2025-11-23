@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetFlatList, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
-import shapesRaw from '../../assets/transit_info/shapes.json';
+import routesRaw from '../../assets/transit_info/routes.json';
+//import shapesRaw from '../../assets/transit_info/shapes.json';
+import stopsRaw from '../../assets/transit_info/stops.json';
+import tripsRaw from '../../assets/transit_info/trips.json';
 
 const mapStyle = [
   {
@@ -286,6 +289,46 @@ type Train = {
   LONGITUDE: string;
 }
 
+type route = {
+  route_id: string;
+  agency_id: string;
+  route_short_name: string;
+  route_long_name: string;
+  route_desc: string;
+  route_type: string;
+  route_url: string;
+  route_color: string;
+  route_text_color: string;
+}
+
+type stop = {
+    stop_id: string;
+    stop_code: string;
+    stop_name: string;
+    stop_desc: string;
+    stop_lat: string;
+    stop_lon: string;
+    zone_id: string;
+    stop_url: string;
+    location_type: string;
+    parent_station: string;
+    stop_timezone: string;
+    wheelchair_boarding: string;
+}
+
+type trip = {
+    route_id: string;
+    service_id: string;
+    trip_id: string;
+    trip_headsign: string;
+    trip_short_name: string;
+    direction_id: string;
+    block_id: string;
+    shape_id: string;
+    wheelchair_accessible: string;
+    bikes_allowed: string;
+}
+
 interface ShapePoint {
   shape_id: string;
   shape_pt_lat: string;
@@ -293,7 +336,10 @@ interface ShapePoint {
   shape_pt_sequence: string;
 }
 
-const shapes = shapesRaw as ShapePoint[];
+//const shapes = shapesRaw as ShapePoint[];
+const routes = routesRaw as route[];
+const stops = stopsRaw as stop[];
+const trips = tripsRaw as trip[];
 
 const railLines: Record<string, string> = {
   BLUE: '136023',
@@ -337,7 +383,7 @@ export default function HomeScreen() {
   const lineCoords = useMemo(() => {
     const result: Record<string, { latitude: number; longitude: number }[]> = {};
 
-    
+    /*
     Object.entries(railLines).forEach(([lineName, shapeId]) => {
       const coords = shapes
         .filter((s) => s.shape_id === shapeId)
@@ -351,6 +397,7 @@ export default function HomeScreen() {
 
       result[lineName] = coords;
     });
+    */
 
     return result;
   }, []);
@@ -534,6 +581,20 @@ export default function HomeScreen() {
       .filter((train) => train.STATION === nearestStation?.apiName)
       //.filter((train) => train.STATION === "FIVE POINTS STATION")
       .sort((a, b) => parseInt(a.WAITING_SECONDS, 10) - parseInt(b.WAITING_SECONDS, 10));
+
+  const sortedBuses = buses.filter(bus => bus.vehicle?.position).map(bus => {
+    const pos = bus.vehicle.position;
+
+    const distance = haversineDistance(
+      location?.latitude || 0,
+      location?.longitude || 0,
+      pos.latitude,
+      pos.longitude
+    );
+
+    return { ...bus, distance };
+  })
+  .sort((a, b) => a.distance - b.distance);
 
   useEffect(() => {
     initData()
@@ -726,7 +787,7 @@ export default function HomeScreen() {
 
             {selectedTransport === 'Buses' && (
               <>
-                {buses.map((bus) => {
+                {sortedBuses.slice(0, 15).map((bus) => {
                   const pos = bus.vehicle?.position;
                   if (!pos) return null;
                   return (
@@ -742,7 +803,7 @@ export default function HomeScreen() {
                           style={{ width: 20, height: 20 }}
                           resizeMode="contain"
                         />
-                        <Text style={{color:textColor}}>{bus.id}</Text>
+                        <Text style={{color:textColor}}>{bus.vehicle?.vehicle?.id}</Text>
                       </View>
                     </Marker>
                   );
@@ -1167,8 +1228,188 @@ export default function HomeScreen() {
               </View>
             ) :
             selectedTransport === 'Buses' ? (
-              <View style={{backgroundColor: isDark ? '#000' : '#F2F2F6', flex: 1, alignContent:'center'}}>
-                <Text style={{color: textColor, textAlign: 'center'}}>insert bus stuff here</Text>
+              /*
+              <View>
+                {buses.map((bus) => {
+                      const pos = bus.vehicle?.position;
+                      if (!pos) return null;
+                      return (
+                        <Marker
+                          key={bus.id}
+                          coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
+                          title={`Bus ${bus.id}`}
+                          onPress={() => focusOn(parseFloat(pos.latitude), parseFloat(pos.longitude))}
+                        >
+                          <View style={styles.markerContainer}>
+                            <Image 
+                              source={require('../../assets/images/busicon.png')}
+                              style={{ width: 20, height: 20 }}
+                              resizeMode="contain"
+                            />
+                            <Text style={{color:textColor}}>{bus.id}</Text>
+                          </View>
+                        </Marker>
+                      );
+                    })}
+              </View>
+              */
+
+              <View>
+                <Text style={{
+                  color: textColor,
+                  fontFamily: 'Arial',
+                  fontSize: 35,
+                  fontWeight: 'bold',
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                  textAlign: 'center'
+                }}>
+                  Routes Nearby
+                </Text>
+                {/*
+                <Text style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        textAlign: 'center',
+                        color: 'white',
+                        fontSize: 25,
+                        paddingVertical: 6,
+                        paddingHorizontal: 16,
+                        marginVertical: 6,
+                        marginHorizontal: 12,
+                        borderRadius: 16,
+                        fontWeight: 'bold',
+                        backgroundColor: '#1976D2',
+                        borderWidth: 3,
+                        borderColor:'#1976D2',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 3,
+                        elevation: 2,
+                        textShadowRadius: 10,
+                        textShadowOffset: { width: 5, height: 5 },
+                        overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                }}>
+                  {nearestStation?.name} Station
+                </Text>
+                */}
+
+                <BottomSheetScrollView
+                  data={buses}
+                  keyExtractor={(_: any, index: { toString: () => any; }) => index.toString()}
+                  contentContainerStyle={{ paddingBottom: insets.bottom + 250 }}
+                  ListEmptyComponent={
+                    <View style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'black',
+                            width: '100%',
+                          }}
+                    >
+                      <Text style={{    
+                          color: 'white',
+                          fontFamily: 'Arial',
+                          fontSize: 20,
+                          fontWeight: '600',
+                          backgroundColor: '#000',
+                          paddingHorizontal: 4,
+                          paddingVertical: 2,
+                      }}
+                      >
+                        No trains found for this station.
+                      </Text>
+                    </View>
+                      }
+                >
+                  {sortedBuses.slice(0,15).map((bus) => {
+                      const pos = bus.vehicle?.position;
+                      const trip = bus.vehicle?.trip;
+                      
+                      if (!pos || !trip) return null;
+
+                      const busRoute = routes.find((r) => r.route_id === trip.routeId);
+
+                      return (
+                      <Pressable
+                        onPress={() => focusOn(parseFloat(bus.vehicle?.position.latitude), parseFloat(bus.vehicle?.position.longitude))}
+                        key={bus.vehicle?.vehicle?.id || bus.id}
+                      >
+                        <View
+                          style={{
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingVertical: 6,
+                            paddingHorizontal: 16,
+                            marginVertical: 6,
+                            marginHorizontal: 12,
+                            borderRadius: 16,
+                            backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                            borderWidth: 3,
+                            borderColor: '#808080',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 3,
+                            elevation: 2,
+                            overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+                          }}
+                        >
+                          <Text style={{
+                            color: isDark ? '#FFF' : '#000',
+                            fontFamily: 'Arial',
+                            fontSize: 25,
+                            fontWeight: 'bold',
+                            paddingHorizontal: 4,
+                            paddingVertical: 2,
+                            borderRadius: 4,
+                            backgroundColor: '#808080',
+                            textShadowRadius: 10,
+                            textShadowOffset: { width: 5, height: 5 }
+                          }}>
+                            Route {busRoute?.route_short_name || trip.routeId}
+                          </Text>
+                          <Text style={{
+                            color: isDark ? '#FFF' : '#000',
+                            fontFamily: 'Arial',
+                            fontSize: 25,
+                            fontWeight: 'bold',
+                            backgroundColor: 'transparent',
+                            paddingHorizontal: 4,
+                            paddingVertical: 2,
+                            borderRadius: 4,
+                          }}>
+                            {busRoute?.route_long_name || "Unknown Route"}
+                          </Text>
+                          <View style={{flexDirection: 'row'}}>
+                            <Text style={{    
+                              color: isDark ? '#FFF' : '#000',
+                              fontFamily: 'Arial',
+                              fontSize: 20,
+                              fontWeight: '600',
+                              backgroundColor: 'transparent',
+                              paddingHorizontal: 4,
+                              paddingVertical: 2,
+                              borderRadius: 4
+                            }}>
+                            Bus #{bus.vehicle?.vehicle?.id || bus.id}
+                            </Text>
+                            <Ionicons
+                              name={"radio"}
+                              size={25}
+                              color={isDark ? '#FFF' : '#000'}
+                              style={{ marginRight: 8 , paddingHorizontal: 2}}
+                            />
+                          </View>
+                        </View>
+                      </Pressable>
+                      );
+                    })}
+                </BottomSheetScrollView>
+
               </View>
             ) :
             selectedTransport ==='Streetcar' ? (
