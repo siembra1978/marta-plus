@@ -4,9 +4,9 @@ import type { LocationObjectCoords } from 'expo-location';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
 import routesRaw from '../../assets/transit_info/routes.json';
@@ -697,7 +697,7 @@ export default function HomeScreen() {
           <MapView 
             style={styles.map} 
             ref={mapRef}
-            provider="google"
+            provider={PROVIDER_GOOGLE}
             pitchEnabled={false}
             rotateEnabled={false}
             showsUserLocation={true}

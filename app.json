@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ride285",
-    "slug": "ride285",
+    "slug": "marta-plus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,13 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.ride285"
+      "bundleIdentifier": "com.siembralabs.ride285"
     },
     "android": {
       "icon": "./assets/images/icon.png",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.ride285"
+      "package": "com.siembralabs.ride285"
     },
     "web": {
       "output": "static",
@@ -46,6 +46,7 @@
       "eas": {
         "projectId": "0c9be866-0c75-4d65-8f7b-db4785ba67fa"
       }
-    }
+    },
+    "owner": "siembra1978"
   }
 }
