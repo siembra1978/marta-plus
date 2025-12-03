@@ -9,8 +9,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as GtfsRealtime from "../../assets/misc/gtfs-realtime.js";
+
+import shapesRaw from '../../assets/transit_info/newshapes.json';
 import routesRaw from '../../assets/transit_info/routes.json';
-//import shapesRaw from '../../assets/transit_info/shapes.json';
 import stopsRaw from '../../assets/transit_info/stops.json';
 import tripsRaw from '../../assets/transit_info/trips.json';
 
@@ -254,21 +255,13 @@ const martaStations = [
 const trainIcons: Record<string, any> = {
   NRed: require('../../assets/trainicons/NRed.png'),
   SRed: require('../../assets/trainicons/SRed.png'),
-  ERed: require('../../assets/trainicons/ERed.png'),
-  WRed: require('../../assets/trainicons/WRed.png'),
 
-  NBlue: require('../../assets/trainicons/NBlue.png'),
-  SBlue: require('../../assets/trainicons/SBlue.png'),
   EBlue: require('../../assets/trainicons/EBlue.png'),
   WBlue: require('../../assets/trainicons/WBlue.png'),
 
   NGold: require('../../assets/trainicons/NGold.png'),
   SGold: require('../../assets/trainicons/SGold.png'),
-  EGold: require('../../assets/trainicons/EGold.png'),
-  WGold: require('../../assets/trainicons/WGold.png'),
 
-  NGreen: require('../../assets/trainicons/NGreen.png'),
-  SGreen: require('../../assets/trainicons/SGreen.png'),
   EGreen: require('../../assets/trainicons/EGreen.png'),
   WGreen: require('../../assets/trainicons/WGreen.png'),
 };
@@ -336,7 +329,7 @@ interface ShapePoint {
   shape_pt_sequence: string;
 }
 
-//const shapes = shapesRaw as ShapePoint[];
+const shapes = shapesRaw as ShapePoint[];
 const routes = routesRaw as route[];
 const stops = stopsRaw as stop[];
 const trips = tripsRaw as trip[];
@@ -383,7 +376,7 @@ export default function HomeScreen() {
   const lineCoords = useMemo(() => {
     const result: Record<string, { latitude: number; longitude: number }[]> = {};
 
-    /*
+    
     Object.entries(railLines).forEach(([lineName, shapeId]) => {
       const coords = shapes
         .filter((s) => s.shape_id === shapeId)
@@ -397,7 +390,7 @@ export default function HomeScreen() {
 
       result[lineName] = coords;
     });
-    */
+    
 
     return result;
   }, []);
@@ -662,37 +655,6 @@ export default function HomeScreen() {
             </Text>
           </View>
           )}
-          
-          {/*nearestTrain && (
-            <View style={{borderWidth:4, borderColor: '#000', borderBottomLeftRadius: 10, borderBottomRightRadius: 10}}>
-                <Text style={{    
-                    color: 'white',
-                    fontFamily: 'Arial',
-                    fontSize: 20,
-                    fontWeight: 'bold',
-                    backgroundColor: '#000',
-                    paddingHorizontal: 4,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    textAlign: 'center'
-              }}>
-                Now Riding
-              </Text>
-              <Text style={{    
-                    color: 'white',
-                    fontFamily: 'Arial',
-                    fontSize: 20,
-                    fontWeight: 'bold',
-                    backgroundColor: '#000',
-                    paddingHorizontal: 4,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    textAlign: 'center'
-              }}>
-                {nearestTrain.TRAIN_ID} | {nearestTrain.LINE} | {nearestTrain.STATION} @ {nearestTrain.WAITING_TIME}
-              </Text>
-            </View>
-          )*/}
 
           <MapView 
             style={styles.map} 
