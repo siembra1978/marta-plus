@@ -1376,7 +1376,7 @@ export default function HomeScreen() {
             ) :
             selectedTransport ==='Streetcar' ? (
               <View style={{backgroundColor: isDark ? '#000' : '#F2F2F6', flex: 1, alignContent:'center'}}>
-                <Text style={{color: textColor, textAlign: 'center'}}>insert streetcar stuff or something else here</Text>
+                <Text style={{color: textColor, textAlign: 'center'}}>Streetcar stuff soon! I swear it!</Text>
               </View>
             ) : null}
           </BottomSheet>
